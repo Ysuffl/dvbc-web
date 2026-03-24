@@ -9,7 +9,7 @@ class Customer extends Model
     const UPDATED_AT = null; 
 
     protected $fillable = [
-        'name', 'phone', 'category', 'created_at'
+        'name', 'phone', 'category', 'age', 'total_spending', 'master_level', 'created_at'
     ];
 
     public function bookings()
