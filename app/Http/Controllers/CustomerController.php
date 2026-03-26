@@ -10,7 +10,7 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::withCount('bookings')
+        $query = Customer::addSelect(['visits_count' => Booking::selectRaw('count(distinct start_time)')->whereColumn('customer_id', 'customers.id')])
                         ->withSum('bookings as total_spent', 'billed_price')
                         ->with(['bookings' => function($query) {
                             $query->orderBy('start_time', 'desc')->with('tableModel');
@@ -18,15 +18,16 @@ class CustomerController extends Controller
                         ->orderBy('created_at', 'desc');
 
         $customers = $query->paginate(15)->withQueryString();
-        $allCustomersForExport = Customer::withCount('bookings')->withSum('bookings as total_spent', 'billed_price')->orderBy('name')->get();
+        $allCustomersForExport = Customer::addSelect(['visits_count' => Booking::selectRaw('count(distinct start_time)')->whereColumn('customer_id', 'customers.id')])->withSum('bookings as total_spent', 'billed_price')->orderBy('name')->get();
         $lifetimeRevenue = Booking::whereRaw('LOWER(CAST(status AS TEXT)) IN (?, ?, ?, ?)', ['completed', 'billed', 'ok', 'paid'])->sum('billed_price');
-        return view('admin.customers', compact('customers', 'lifetimeRevenue', 'allCustomersForExport'));
+        $levels = \App\Models\MasterLevel::orderBy('min_spending', 'asc')->get();
+        return view('admin.customers', compact('customers', 'lifetimeRevenue', 'allCustomersForExport', 'levels'));
     }
 
     public function export()
     {
         $customers = Customer::withSum('bookings as total_spent', 'billed_price')
-                            ->withCount('bookings')
+                            ->addSelect(['visits_count' => Booking::selectRaw('count(distinct start_time)')->whereColumn('customer_id', 'customers.id')])
                             ->orderBy('name')
                             ->get();
 

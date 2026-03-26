@@ -1,7 +1,29 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-8 animate-in fade-in duration-700">
+<div class="space-y-8 animate-in fade-in duration-700" 
+     x-data="{ 
+        showProgressModal: false, 
+        selectedCust: {}, 
+        levels: {{ $levels->toJson() }},
+        get progressPercentage() {
+            if (!this.selectedCust.total_spent) return 0;
+            const spent = parseFloat(this.selectedCust.total_spent);
+            const maxLevel = this.levels[this.levels.length - 1];
+            if (spent >= maxLevel.min_spending) return 100;
+            
+            // Find current segment
+            for(let i=0; i < this.levels.length - 1; i++) {
+                const current = parseFloat(this.levels[i].min_spending);
+                const next = parseFloat(this.levels[i+1].min_spending);
+                if (spent >= current && spent < next) {
+                    const segmentProgress = (spent - current) / (next - current);
+                    return ((i + segmentProgress) / (this.levels.length - 1)) * 100;
+                }
+            }
+            return 0;
+        }
+     }">
     <!-- Premium Header -->
     <div class="relative overflow-hidden bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200">
         <!-- Abstract Background Shapes -->
@@ -52,7 +74,7 @@
                     <thead>
                         <tr class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                             <th class="pb-5 px-4 text-left">Guest Name</th>
-                            <th class="pb-5 px-4 text-left">Category</th>
+                            <th class="pb-5 px-4 text-left">Level</th>
                             <th class="pb-5 px-4 text-left">Last Visit</th>
                             <th class="pb-5 px-4 text-center">Total Visits</th>
                             <th class="pb-5 px-4 text-right">Total Spend</th>
@@ -64,18 +86,13 @@
                         @foreach($customers as $c)
                         @php
                             $latest = $c->bookings->first();
-                            $cat = strtoupper($c->category ?? 'REGULAR');
+                            $cat = strtoupper($c->master_level ?? 'BRONZE');
                             $catColor = 'bg-slate-50 text-slate-400';
-                            $catIcon = 'user';
-                            if ($cat === 'PRIORITY') { $catColor = 'bg-amber-50 text-amber-600'; $catIcon = 'crown'; }
-                            elseif ($cat === 'EVENT') { $catColor = 'bg-indigo-50 text-indigo-600'; $catIcon = 'megaphone'; }
-                            elseif ($cat === 'BIG SPENDER') { $catColor = 'bg-emerald-50 text-emerald-600'; $catIcon = 'dollar-sign'; }
-                            elseif ($cat === 'DRINKER') { $catColor = 'bg-blue-50 text-blue-600'; $catIcon = 'glass-water'; }
-                            elseif ($cat === 'PARTY') { $catColor = 'bg-purple-50 text-purple-600'; $catIcon = 'sparkles'; }
-                            elseif ($cat === 'DINNER') { $catColor = 'bg-orange-50 text-orange-600'; $catIcon = 'utensils-crossed'; }
-                            elseif ($cat === 'LUNCH') { $catColor = 'bg-rose-50 text-rose-600'; $catIcon = 'utensils'; }
-                            elseif ($cat === 'FAMILY') { $catColor = 'bg-cyan-50 text-cyan-600'; $catIcon = 'users'; }
-                            elseif ($cat === 'YOUNGSTER') { $catColor = 'bg-pink-50 text-pink-600'; $catIcon = 'smile'; }
+                            $catIcon = 'award';
+                            if ($cat === 'PLATINUM') { $catColor = 'bg-blue-100 text-blue-800'; $catIcon = 'crown'; }
+                            elseif ($cat === 'GOLD') { $catColor = 'bg-yellow-200 text-yellow-800'; $catIcon = 'award'; }
+                            elseif ($cat === 'SILVER') { $catColor = 'bg-slate-200 text-slate-800'; $catIcon = 'star'; }
+                            elseif ($cat === 'BRONZE') { $catColor = 'bg-orange-100 text-orange-800'; $catIcon = 'shield'; }
                         @endphp
                         <tr class="group hover:scale-[1.005] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
                             <!-- Guest Name -->
@@ -91,7 +108,7 @@
                                 </div>
                             </td>
 
-                            <!-- Category -->
+                            <!-- Level -->
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors">
                                 <span class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 w-fit">
                                     <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
@@ -117,7 +134,7 @@
                             <!-- Total Visits -->
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors text-center">
                                 <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-lg border border-slate-100 shadow-sm">
-                                    <span class="text-sm font-black text-slate-700 leading-none">{{ $c->bookings_count }}</span>
+                                    <span class="text-sm font-black text-slate-700 leading-none">{{ $c->visits_count ?? 0 }}</span>
                                     <i data-lucide="award" class="w-3.5 h-3.5 text-blue-500"></i>
                                 </div>
                             </td>
@@ -155,7 +172,16 @@
                                             <i data-lucide="phone-call" class="w-4 h-4"></i>
                                         </a>
                                     @endif
-                                    <button class="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 rounded-xl transition-all group-hover:scale-110 active:scale-95">
+                                    <button 
+                                        @click="selectedCust = { 
+                                            name: '{{ $c->name }}', 
+                                            level: '{{ $cat }}', 
+                                            total_spent: {{ $c->total_spent ?? 0 }}, 
+                                            visits: {{ $c->visits_count ?? 0 }},
+                                            phone: '{{ $c->phone }}',
+                                            last_visit: '{{ $latest ? $latest->start_time->format('d M, Y') : 'Never' }}'
+                                        }; showProgressModal = true; $nextTick(() => lucide.createIcons())"
+                                        class="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 rounded-xl transition-all group-hover:scale-110 active:scale-95">
                                         <i data-lucide="external-link" class="w-4 h-4"></i>
                                     </button>
                                 </div>
@@ -172,34 +198,106 @@
         </div>
     </div>
 
-    <!-- Hidden Export Table -->
-    <div style="display: none;">
-        <table id="all-customers-export">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Category</th>
-                    <th>Total Visits</th>
-                    <th>Total Spend (IDR)</th>
-                    <th>Created At</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($allCustomersForExport as $customer)
-                <tr>
-                    <td>{{ $customer->id }}</td>
-                    <td>{{ $customer->name }}</td>
-                    <td>{{ $customer->phone }}</td>
-                    <td>{{ strtoupper($customer->category ?? 'REGULER') }}</td>
-                    <td>{{ $customer->bookings_count }}</td>
-                    <td>{{ $customer->total_spent ?? 0 }}</td>
-                    <td>{{ $customer->created_at }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <!-- Progress Modal -->
+    <div x-show="showProgressModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showProgressModal" 
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 transition-opacity" @click="showProgressModal = false">
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
+
+            <div x-show="showProgressModal" 
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                
+                <div class="p-8 sm:p-12">
+                    <div class="flex justify-between items-start mb-10">
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-800 tracking-tighter" x-text="selectedCust.name"></h3>
+                            <p class="text-slate-400 font-bold text-sm mt-1" x-text="selectedCust.phone"></p>
+                        </div>
+                        <button @click="showProgressModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+
+                    <!-- Visual Progress Card -->
+                    <div class="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                        <!-- Header inside card -->
+                        <div class="flex justify-between items-start mb-12 border-b border-slate-50 pb-8">
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status Anda</p>
+                                <h4 class="text-2xl font-black text-slate-800 tracking-tight" x-text="'VIP ' + selectedCust.level"></h4>
+                                <p class="text-blue-500 font-bold text-xs" x-text="'Terakhir berkunjung: ' + selectedCust.last_visit"></p>
+                            </div>
+                            <div class="text-right space-y-1">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kunjungan</p>
+                                <p class="text-3xl font-black text-slate-800 tracking-tight" x-text="selectedCust.visits"></p>
+                                <p class="text-slate-400 font-bold text-[10px] uppercase">Kunjungan Selesai</p>
+                            </div>
+                        </div>
+
+                        <!-- The Progress Roadmap -->
+                        <div class="relative pt-12 pb-16 px-4">
+                            <!-- Progress Label (mimicking '2 / 10 Kunjungan Selesai', but with spend) -->
+                            <div class="absolute -top-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                                <span class="text-[11px] font-black text-slate-800 mb-1" 
+                                      x-text="'Rp ' + (selectedCust.total_spent || 0).toLocaleString() + ' / ' + 
+                                              (parseFloat(levels.find(l => parseFloat(l.min_spending) > parseFloat(selectedCust.total_spent))?.min_spending || levels[levels.length-1].min_spending)).toLocaleString() + ' Belanja Terkumpul'">
+                                </span>
+                            </div>
+
+                            <!-- roadmap container -->
+                            <div class="relative pt-10">
+                                <!-- Background Bar (Segmented) -->
+                                <div class="h-6 w-full bg-slate-100 rounded-lg flex gap-1 p-1 overflow-hidden">
+                                    <template x-for="i in 10">
+                                        <div class="flex-1 rounded-sm transition-all duration-700"
+                                             :class="progressPercentage >= (i * 10) ? 'bg-amber-400' : 'bg-slate-200/50'"></div>
+                                    </template>
+                                </div>
+
+                                <!-- Nodes on top of bar -->
+                                <div class="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-0">
+                                    <template x-for="(lvl, index) in levels" :key="index">
+                                        <div class="relative flex flex-col items-center group">
+                                            <!-- Node Circle -->
+                                            <div class="w-12 h-12 rounded-full border-[3px] flex items-center justify-center transition-all duration-500 z-10 shadow-lg"
+                                                 :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) 
+                                                         ? 'bg-slate-800 border-white text-white scale-110' 
+                                                         : 'bg-white border-slate-200 text-slate-300'">
+                                                <i data-lucide="star" class="w-5 h-5" :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) ? 'fill-amber-400 text-amber-400' : ''"></i>
+                                            </div>
+                                            <!-- Node Label -->
+                                            <p class="absolute top-16 text-[10px] font-black uppercase tracking-widest whitespace-nowrap text-center"
+                                               :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) ? 'text-slate-800' : 'text-slate-400'"
+                                               x-text="(lvl.name === 'Bronze' ? '' : 'VIP ') + lvl.name"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Info -->
+                        <div class="mt-8 pt-8 border-t border-slate-50 flex items-center justify-center gap-2">
+                             <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                             <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Akun Terverifikasi</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-12">
+                        <button @click="showProgressModal = false" class="w-full py-5 bg-slate-100 text-slate-500 rounded-3xl text-sm font-black hover:bg-slate-200 transition-all uppercase tracking-[0.2em] leading-none">
+                            Tutup Detail
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     @section('scripts')

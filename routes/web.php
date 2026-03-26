@@ -20,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/floor-plan/update', [AdminDashboardController::class, 'updateCoordinates'])->name('update_coordinates');
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers');
     Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
+    Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
     
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

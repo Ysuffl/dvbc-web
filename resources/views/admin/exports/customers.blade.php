@@ -4,7 +4,7 @@
         <th>ID</th>
         <th>Name</th>
         <th>Phone</th>
-        <th>Category</th>
+        <th>Level</th>
         <th>Total Visits</th>
         <th>Total Spend</th>
         <th>Created At</th>
@@ -16,8 +16,8 @@
             <td>{{ $customer->id }}</td>
             <td>{{ $customer->name }}</td>
             <td>{{ $customer->phone }}</td>
-            <td>{{ strtoupper($customer->category ?? 'REGULER') }}</td>
-            <td>{{ $customer->bookings_count }}</td>
+            <td>{{ strtoupper($customer->master_level ?? 'BRONZE') }}</td>
+            <td>{{ $customer->visits_count ?? 0 }}</td>
             <td>{{ $customer->total_spent ?? 0 }}</td>
             <td>{{ $customer->created_at }}</td>
         </tr>

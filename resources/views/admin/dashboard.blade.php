@@ -153,10 +153,40 @@
 
         <!-- This Week Stats Card -->
         <div class="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 border border-gray-50/50">
-            <div
-                class="inline-flex items-center gap-2.5 mb-10 px-5 py-2.5 bg-slate-50 rounded-2xl border border-slate-100/50">
-                <i data-lucide="calendar-range" class="w-4 h-4 text-slate-500"></i>
-                <span class="text-sm font-black text-slate-600">This Week</span>
+            <div class="relative inline-block text-left mb-10" x-data="{ openPeriod: false }">
+                <button type="button" @click="openPeriod = !openPeriod"
+                    class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-slate-100 transition-colors">
+                    <i data-lucide="calendar-range" class="w-4 h-4 text-slate-500"></i>
+                    <span class="text-sm font-black text-slate-600 uppercase tracking-tight">
+                        @php
+                            $periodLabels = [
+                                'today' => 'Today',
+                                'this_week' => 'This Week',
+                                'this_month' => 'This Month',
+                                'this_year' => 'This Year'
+                            ];
+                            echo $periodLabels[request('period', 'this_week')] ?? 'This Week';
+                        @endphp
+                    </span>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                </button>
+                <div x-show="openPeriod" @click.away="openPeriod = false"
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden"
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="transform opacity-0 scale-95"
+                    x-transition:enter-end="transform opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="transform opacity-100 scale-100"
+                    x-transition:leave-end="transform opacity-0 scale-95">
+                    <div class="p-2 space-y-1">
+                        @foreach(['today' => 'Today', 'this_week' => 'This Week', 'this_month' => 'This Month', 'this_year' => 'This Year'] as $val => $label)
+                        <a href="{{ request()->fullUrlWithQuery(['period' => $val]) }}"
+                            class="block px-4 py-2.5 text-sm font-bold rounded-lg transition-colors {{ request('period', 'this_week') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}">
+                            {{ $label }}
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-5">
@@ -554,7 +584,7 @@
                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity"
-                    @click="showBookingModal = false">
+                    @click="showBookingModal = false; resetForm()">
                     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
                 </div>
 
@@ -567,29 +597,125 @@
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-white p-10">
+                    <div class="bg-white p-10" x-data="{ 
+                        customerSearch: '', 
+                        searchResults: [], 
+                        selectedCustomer: null,
+                        allCustomers: [],
+                        
+                        filterCustomers() {
+                            if (this.customerSearch.length < 2) {
+                                this.searchResults = [];
+                                return;
+                            }
+                            const q = this.customerSearch.toLowerCase();
+                            this.searchResults = this.allCustomers.filter(c => 
+                                (c.name && c.name.toLowerCase().includes(q)) || 
+                                (c.phone && c.phone.includes(q))
+                            ).slice(0, 8);
+                        },
+
+                        selectCustomer(c) {
+                            this.selectedCustomer = c;
+                            this.customerSearch = c.name;
+                            this.searchResults = [];
+                            // Sync other fields
+                            if ($refs.phoneInput) $refs.phoneInput.value = c.phone || '';
+                            if ($refs.ageInput) $refs.ageInput.value = c.age || '';
+                            if ($refs.categorySelect && c.category) {
+                                $refs.categorySelect.value = c.category.toUpperCase();
+                            }
+                        },
+
+                        clearCustomer() {
+                            if (this.selectedCustomer && this.customerSearch !== this.selectedCustomer.name) {
+                                this.selectedCustomer = null;
+                            }
+                        },
+
+                        resetForm() {
+                            this.customerSearch = '';
+                            this.searchResults = [];
+                            this.selectedCustomer = null;
+                            if (this.$refs.bookingForm) this.$refs.bookingForm.reset();
+                        }
+                    }" x-init="allCustomers = {{ Js::from($customers) }}">
                         <div class="flex justify-between items-center mb-10">
                             <div>
                                 <h3 class="text-2xl font-black text-slate-800 tracking-tight">Create New Booking</h3>
                                 <p class="text-sm text-slate-400 font-medium mt-1">Fill in the details for the
                                     reservation</p>
                             </div>
-                            <button @click="showBookingModal = false"
+                            <button @click="showBookingModal = false; resetForm()"
                                 class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
                                 <i data-lucide="x" class="w-6 h-6"></i>
                             </button>
                         </div>
 
-                        <form action="{{ route('bookings.store') }}" method="POST" class="space-y-6">
+                        <form action="{{ route('bookings.store') }}" method="POST" class="space-y-6" x-ref="bookingForm">
                             @csrf
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Guest Name -->
-                                <div class="md:col-span-2">
+                                <div class="md:col-span-2 relative">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Guest
-                                        Name</label>
-                                    <input type="text" name="customer_name" required placeholder="Enter guest name"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">
+                                        <span>Guest Name</span>
+                                        <template x-if="selectedCustomer">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
+                                                :class="{
+                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.toLowerCase() === 'gold',
+                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.toLowerCase() === 'silver',
+                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.toLowerCase() === 'bronze',
+                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.toLowerCase() === 'reguler'
+                                                }"
+                                                x-text="selectedCustomer.master_level">
+                                            </span>
+                                        </template>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" name="customer_name" required placeholder="Search name or phone..."
+                                            x-model="customerSearch"
+                                            @input.debounce.200ms="filterCustomers(); clearCustomer()"
+                                            autocomplete="off"
+                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        
+                                        <!-- Search Results Dropdown -->
+                                        <div x-show="searchResults.length > 0" 
+                                            class="absolute z-[100] left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                            x-transition:enter="transition ease-out duration-200"
+                                            x-transition:enter-start="opacity-0 translate-y-2"
+                                            x-transition:enter-end="opacity-100 translate-y-0"
+                                            x-cloak>
+                                            <div class="max-h-[250px] overflow-y-auto">
+                                                <template x-for="c in searchResults" :key="c.id">
+                                                    <div @click="selectCustomer(c)" 
+                                                        class="px-6 py-4 hover:bg-slate-50 cursor-pointer flex items-center justify-between group border-b border-slate-50 last:border-0">
+                                                        <div class="flex items-center gap-4">
+                                                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-lg"
+                                                                :class="{
+                                                                    'bg-amber-50 text-amber-500': c.master_level?.toLowerCase() === 'gold',
+                                                                    'bg-slate-100 text-slate-500': c.master_level?.toLowerCase() === 'silver',
+                                                                    'bg-orange-50 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                }">
+                                                                <span x-text="c.name.substring(0,1).toUpperCase()"></span>
+                                                            </div>
+                                                            <div>
+                                                                <p class="text-sm font-black text-slate-800" x-text="c.name"></p>
+                                                                <p class="text-[10px] font-bold text-slate-400" x-text="c.phone || '-'"></p>
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-slate-100 text-slate-500"
+                                                            :class="{
+                                                                'bg-amber-100 text-amber-600': c.master_level?.toLowerCase() === 'gold',
+                                                                'bg-slate-100 text-slate-600': c.master_level?.toLowerCase() === 'silver',
+                                                                'bg-orange-100 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                            }"
+                                                            x-text="c.master_level"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Area Selection -->
@@ -625,7 +751,7 @@
                                 <div>
                                     <label
                                         class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
-                                    <select name="customer_category" required
+                                    <select name="customer_category" required x-ref="categorySelect"
                                         class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
                                         <option value="REGULAR">REGULAR</option>
                                         <option value="PRIORITY">PRIORITY</option>
@@ -655,13 +781,13 @@
                                         <label
                                             class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact
                                             Number</label>
-                                        <input type="text" name="phone" placeholder="Enter phone number"
+                                        <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
                                     <div>
                                         <label
                                             class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                        <input type="number" name="age" placeholder="Age"
+                                        <input type="number" name="age" placeholder="Age" x-ref="ageInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
                                 </div>
@@ -713,7 +839,7 @@
                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity"
-                    @click="showEventModal = false">
+                    @click="showEventModal = false; resetForm()">
                     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
                 </div>
 
@@ -726,30 +852,122 @@
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-white p-10">
+                    <div class="bg-white p-10" x-data="{ 
+                        customerSearch: '', 
+                        searchResults: [], 
+                        selectedCustomer: null,
+                        allCustomers: [],
+                        
+                        filterCustomers() {
+                            if (this.customerSearch.length < 2) {
+                                this.searchResults = [];
+                                return;
+                            }
+                            const q = this.customerSearch.toLowerCase();
+                            this.searchResults = this.allCustomers.filter(c => 
+                                (c.name && c.name.toLowerCase().includes(q)) || 
+                                (c.phone && c.phone.includes(q))
+                            ).slice(0, 8);
+                        },
+
+                        selectCustomer(c) {
+                            this.selectedCustomer = c;
+                            this.customerSearch = c.name;
+                            this.searchResults = [];
+                            // Sync other fields
+                            if ($refs.phoneInput) $refs.phoneInput.value = c.phone || '';
+                            if ($refs.ageInput) $refs.ageInput.value = c.age || '';
+                        },
+
+                        clearCustomer() {
+                            if (this.selectedCustomer && this.customerSearch !== this.selectedCustomer.name) {
+                                this.selectedCustomer = null;
+                            }
+                        },
+
+                        resetForm() {
+                            this.customerSearch = '';
+                            this.searchResults = [];
+                            this.selectedCustomer = null;
+                            if (this.$refs.eventForm) this.$refs.eventForm.reset();
+                        }
+                    }" x-init="allCustomers = {{ Js::from($customers) }}">
                         <div class="flex justify-between items-center mb-10">
                             <div>
                                 <h3 class="text-2xl font-black text-slate-800 tracking-tight">Create Event Booking</h3>
                                 <p class="text-sm text-slate-400 font-medium mt-1">Select multiple tables for your event
                                 </p>
                             </div>
-                            <button @click="showEventModal = false"
+                            <button @click="showEventModal = false; resetForm()"
                                 class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
                                 <i data-lucide="x" class="w-6 h-6"></i>
                             </button>
                         </div>
 
-                        <form action="{{ route('bookings.event_store') }}" method="POST" class="space-y-6">
+                        <form action="{{ route('bookings.event_store') }}" method="POST" class="space-y-6" x-ref="eventForm">
                             @csrf
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Guest Name -->
-                                <div class="md:col-span-2">
+                                <div class="md:col-span-2 relative">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Event
-                                        / Guest Name</label>
-                                    <input type="text" name="customer_name" required
-                                        placeholder="Enter event or guest name"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">
+                                        <span>Event / Guest Name</span>
+                                        <template x-if="selectedCustomer">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
+                                                :class="{
+                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.toLowerCase() === 'gold',
+                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.toLowerCase() === 'silver',
+                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.toLowerCase() === 'bronze',
+                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.toLowerCase() === 'reguler'
+                                                }"
+                                                x-text="selectedCustomer.master_level">
+                                            </span>
+                                        </template>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" name="customer_name" required placeholder="Search name or phone..."
+                                            x-model="customerSearch"
+                                            @input.debounce.200ms="filterCustomers(); clearCustomer()"
+                                            autocomplete="off"
+                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        
+                                        <!-- Search Results Dropdown -->
+                                        <div x-show="searchResults.length > 0" 
+                                            class="absolute z-[100] left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                            x-transition:enter="transition ease-out duration-200"
+                                            x-transition:enter-start="opacity-0 translate-y-2"
+                                            x-transition:enter-end="opacity-100 translate-y-0"
+                                            x-cloak>
+                                            <div class="max-h-[250px] overflow-y-auto">
+                                                <template x-for="c in searchResults" :key="c.id">
+                                                    <div @click="selectCustomer(c)" 
+                                                        class="px-6 py-4 hover:bg-slate-50 cursor-pointer flex items-center justify-between group border-b border-slate-50 last:border-0">
+                                                        <div class="flex items-center gap-4">
+                                                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-lg"
+                                                                :class="{
+                                                                    'bg-amber-50 text-amber-500': c.master_level?.toLowerCase() === 'gold',
+                                                                    'bg-slate-100 text-slate-500': c.master_level?.toLowerCase() === 'silver',
+                                                                    'bg-orange-50 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                }">
+                                                                <span x-text="c.name.substring(0,1).toUpperCase()"></span>
+                                                            </div>
+                                                            <div>
+                                                                <p class="text-sm font-black text-slate-800" x-text="c.name"></p>
+                                                                <p class="text-[10px] font-bold text-slate-400" x-text="c.phone || '-'"></p>
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-slate-100 text-slate-500"
+                                                            :class="{
+                                                                'bg-amber-100 text-amber-600': c.master_level?.toLowerCase() === 'gold',
+                                                                'bg-slate-100 text-slate-600': c.master_level?.toLowerCase() === 'silver',
+                                                                'bg-orange-100 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                            }"
+                                                            x-text="c.master_level"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Table Selection (Multi) with Area Filter -->
@@ -804,13 +1022,13 @@
                                         <label
                                             class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact
                                             Number</label>
-                                        <input type="text" name="phone" placeholder="Enter phone number"
+                                        <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
                                     <div>
                                         <label
                                             class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                        <input type="number" name="age" placeholder="Age"
+                                        <input type="number" name="age" placeholder="Age" x-ref="ageInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
                                 </div>
