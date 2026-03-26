@@ -37,6 +37,8 @@
                     $statusClass = 'bg-[#fbbf24] text-white border-[#fbbf24] shadow-[0_4px_12px_rgba(251,191,36,0.25)]';
                 } elseif (in_array($status, ['billed', 'completed', 'ok', 'finished', 'done', 'paid'])) {
                     $statusClass = 'bg-[#10b981] text-white border-[#10b981] shadow-[0_4px_12px_rgba(16,185,129,0.25)]';
+                } elseif ($status === 'hold') {
+                    $statusClass = 'bg-[#3b82f6] text-white border-[#3b82f6] shadow-[0_4px_12px_rgba(59,130,246,0.25)]';
                 }
 
 
@@ -99,8 +101,8 @@
                     <span class="text-sm text-slate-500 font-bold uppercase tracking-wider">Pending</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-2.5 h-2.5 bg-[#10b981] rounded-full ring-4 ring-emerald-50"></div>
-                    <span class="text-sm text-slate-500 font-bold uppercase tracking-wider">Billed</span>
+                    <div class="w-2.5 h-2.5 bg-[#3b82f6] rounded-full ring-4 ring-blue-50"></div>
+                    <span class="text-sm text-slate-500 font-bold uppercase tracking-wider">Hold</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-2.5 h-2.5 bg-white border border-slate-200 rounded-full"></div>
@@ -663,12 +665,12 @@
                                         <template x-if="selectedCustomer">
                                             <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
                                                 :class="{
-                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.toLowerCase() === 'gold',
-                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.toLowerCase() === 'silver',
-                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.toLowerCase() === 'bronze',
-                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.toLowerCase() === 'reguler'
+                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.name?.toLowerCase() === 'gold',
+                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.name?.toLowerCase() === 'silver',
+                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.name?.toLowerCase() === 'bronze',
+                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.name?.toLowerCase() === 'reguler'
                                                 }"
-                                                x-text="selectedCustomer.master_level">
+                                                x-text="selectedCustomer.master_level?.name">
                                             </span>
                                         </template>
                                     </label>
@@ -693,9 +695,9 @@
                                                         <div class="flex items-center gap-4">
                                                             <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-lg"
                                                                 :class="{
-                                                                    'bg-amber-50 text-amber-500': c.master_level?.toLowerCase() === 'gold',
-                                                                    'bg-slate-100 text-slate-500': c.master_level?.toLowerCase() === 'silver',
-                                                                    'bg-orange-50 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                    'bg-amber-50 text-amber-500': c.master_level?.name?.toLowerCase() === 'gold',
+                                                                    'bg-slate-100 text-slate-500': c.master_level?.name?.toLowerCase() === 'silver',
+                                                                    'bg-orange-50 text-orange-600': c.master_level?.name?.toLowerCase() === 'bronze'
                                                                 }">
                                                                 <span x-text="c.name.substring(0,1).toUpperCase()"></span>
                                                             </div>
@@ -706,11 +708,11 @@
                                                         </div>
                                                         <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-slate-100 text-slate-500"
                                                             :class="{
-                                                                'bg-amber-100 text-amber-600': c.master_level?.toLowerCase() === 'gold',
-                                                                'bg-slate-100 text-slate-600': c.master_level?.toLowerCase() === 'silver',
-                                                                'bg-orange-100 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                'bg-amber-100 text-amber-600': c.master_level?.name?.toLowerCase() === 'gold',
+                                                                'bg-slate-100 text-slate-600': c.master_level?.name?.toLowerCase() === 'silver',
+                                                                'bg-orange-100 text-orange-600': c.master_level?.name?.toLowerCase() === 'bronze'
                                                             }"
-                                                            x-text="c.master_level"></span>
+                                                            x-text="c.master_level?.name"></span>
                                                     </div>
                                                 </template>
                                             </div>
@@ -915,12 +917,12 @@
                                         <template x-if="selectedCustomer">
                                             <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
                                                 :class="{
-                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.toLowerCase() === 'gold',
-                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.toLowerCase() === 'silver',
-                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.toLowerCase() === 'bronze',
-                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.toLowerCase() === 'reguler'
+                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.name?.toLowerCase() === 'gold',
+                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.name?.toLowerCase() === 'silver',
+                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.name?.toLowerCase() === 'bronze',
+                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.name?.toLowerCase() === 'reguler'
                                                 }"
-                                                x-text="selectedCustomer.master_level">
+                                                x-text="selectedCustomer.master_level?.name">
                                             </span>
                                         </template>
                                     </label>
@@ -945,9 +947,9 @@
                                                         <div class="flex items-center gap-4">
                                                             <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-lg"
                                                                 :class="{
-                                                                    'bg-amber-50 text-amber-500': c.master_level?.toLowerCase() === 'gold',
-                                                                    'bg-slate-100 text-slate-500': c.master_level?.toLowerCase() === 'silver',
-                                                                    'bg-orange-50 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                    'bg-amber-50 text-amber-500': c.master_level?.name?.toLowerCase() === 'gold',
+                                                                    'bg-slate-100 text-slate-500': c.master_level?.name?.toLowerCase() === 'silver',
+                                                                    'bg-orange-50 text-orange-600': c.master_level?.name?.toLowerCase() === 'bronze'
                                                                 }">
                                                                 <span x-text="c.name.substring(0,1).toUpperCase()"></span>
                                                             </div>
@@ -958,11 +960,11 @@
                                                         </div>
                                                         <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-slate-100 text-slate-500"
                                                             :class="{
-                                                                'bg-amber-100 text-amber-600': c.master_level?.toLowerCase() === 'gold',
-                                                                'bg-slate-100 text-slate-600': c.master_level?.toLowerCase() === 'silver',
-                                                                'bg-orange-100 text-orange-600': c.master_level?.toLowerCase() === 'bronze'
+                                                                'bg-amber-100 text-amber-600': c.master_level?.name?.toLowerCase() === 'gold',
+                                                                'bg-slate-100 text-slate-600': c.master_level?.name?.toLowerCase() === 'silver',
+                                                                'bg-orange-100 text-orange-600': c.master_level?.name?.toLowerCase() === 'bronze'
                                                             }"
-                                                            x-text="c.master_level"></span>
+                                                            x-text="c.master_level?.name"></span>
                                                     </div>
                                                 </template>
                                             </div>

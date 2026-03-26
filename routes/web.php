@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers');
     Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
     Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
+    Route::get('/demographics', [\App\Http\Controllers\DemographicController::class, 'index'])->name('demographics');
     
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

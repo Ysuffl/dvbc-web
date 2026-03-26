@@ -29,4 +29,9 @@ class Booking extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    public function tags()
+    {
+        return $this->belongsToMany(MasterTag::class, 'booking_tags', 'booking_id', 'tag_id');
+    }
 }

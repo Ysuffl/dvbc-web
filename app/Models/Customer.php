@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -9,11 +10,28 @@ class Customer extends Model
     const UPDATED_AT = null; 
 
     protected $fillable = [
-        'name', 'phone', 'category', 'age', 'total_spending', 'master_level', 'created_at'
+        'name', 'phone', 'category', 'age', 'gender', 'total_spending', 'master_level_id', 'created_at', 'last_status', 'last_visit'
     ];
+
+    public function masterLevel()
+    {
+        return $this->belongsTo(MasterLevel::class, 'master_level_id');
+    }
 
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'customer_id');
+    }
+
+    public function topTags($limit = 3)
+    {
+        return MasterTag::join('booking_tags', 'master_tags.id', '=', 'booking_tags.tag_id')
+            ->join('bookings', 'booking_tags.booking_id', '=', 'bookings.id')
+            ->where('bookings.customer_id', $this->id)
+            ->select('master_tags.*', DB::raw('count(*) as count'))
+            ->groupBy('master_tags.id')
+            ->orderByDesc('count')
+            ->limit($limit)
+            ->get();
     }
 }

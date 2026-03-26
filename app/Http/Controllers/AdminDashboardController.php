@@ -53,8 +53,25 @@ class AdminDashboardController extends Controller
                 // this ensures the Blade only sees 'valid' current bookings
                 $table->setRelation('bookings', $validBookings);
 
+                $status = strtolower($table->status);
+
                 if ($validBookings->isEmpty()) {
-                    $table->status = 'available';
+                    // Check if table is on HOLD and not expired
+                    if ($status === 'hold' && $table->hold_until && $table->hold_until->isAfter($now)) {
+                        $table->status = 'hold';
+                    } else {
+                        $table->status = 'available';
+                    }
+                } else {
+                    // Direct status from the first valid booking
+                    $first = $validBookings->first();
+                    $bStatus = strtolower($first->status);
+                    
+                    if (in_array($bStatus, ['occupied', 'arrived'])) {
+                        $table->status = 'occupied';
+                    } else {
+                        $table->status = 'booked';
+                    }
                 }
             });
 

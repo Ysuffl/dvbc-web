@@ -15,11 +15,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // FastAPI compatible hashed password for 'admin'
+        // Using $2y$ format which is compatible with both Laravel and Passlib/FastAPI
+        User::create([
+            'username' => 'admin',
+            'hashed_password' => \Illuminate\Support\Facades\Hash::make('admin'),
+            'role' => 'ADMIN',
+            'is_active' => true,
         ]);
     }
 }

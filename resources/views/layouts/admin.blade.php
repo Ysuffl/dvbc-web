@@ -77,6 +77,10 @@
                         <i data-lucide="contact" class="w-5 h-5 {{ request()->routeIs('customers') ? 'text-[#4f46e5]' : '' }}"></i>
                         <span class="font-bold text-[13px]">Customer CRM</span>
                     </a>
+                    <a href="{{ route('demographics') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('demographics') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
+                        <i data-lucide="pie-chart" class="w-5 h-5 {{ request()->routeIs('demographics') ? 'text-[#4f46e5]' : '' }}"></i>
+                        <span class="font-bold text-[13px]">Demographics</span>
+                    </a>
                 </nav>
             </div>
 

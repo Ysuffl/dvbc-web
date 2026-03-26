@@ -75,7 +75,9 @@
                         <tr class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                             <th class="pb-5 px-4 text-left">Guest Name</th>
                             <th class="pb-5 px-4 text-left">Level</th>
+                            <th class="pb-5 px-4 text-left">Gender</th>
                             <th class="pb-5 px-4 text-left">Last Visit</th>
+                            <th class="pb-5 px-4 text-left">Frequent Tags</th>
                             <th class="pb-5 px-4 text-center">Total Visits</th>
                             <th class="pb-5 px-4 text-right">Total Spend</th>
                             <th class="pb-5 px-4 text-left">Contact Info</th>
@@ -86,7 +88,7 @@
                         @foreach($customers as $c)
                         @php
                             $latest = $c->bookings->first();
-                            $cat = strtoupper($c->master_level ?? 'BRONZE');
+                            $cat = strtoupper($c->masterLevel->name ?? 'BRONZE');
                             $catColor = 'bg-slate-50 text-slate-400';
                             $catIcon = 'award';
                             if ($cat === 'PLATINUM') { $catColor = 'bg-blue-100 text-blue-800'; $catIcon = 'crown'; }
@@ -103,7 +105,7 @@
                                     </div>
                                     <div>
                                         <h4 class="font-black text-slate-800 text-sm tracking-tight capitalize">{{ $c->name }}</h4>
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Verified Account</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ $c->gender ?: 'Not Set' }} • {{ $c->age ? $c->age.' Thn' : '---' }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -113,6 +115,13 @@
                                 <span class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 w-fit">
                                     <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
                                     {{ $cat }}
+                                </span>
+                            </td>
+
+                            <!-- Gender -->
+                            <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors">
+                                <span class="text-xs font-bold text-slate-600">
+                                    {{ $c->gender ?: '---' }}
                                 </span>
                             </td>
 
@@ -129,6 +138,24 @@
                                 @else
                                     <span class="text-xs text-slate-300 italic font-medium">Never visited</span>
                                 @endif
+                            </td>
+
+                            <!-- Frequent Tags -->
+                            <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors">
+                                <div class="flex flex-wrap gap-1">
+                                    @php
+                                        $topTags = $c->topTags(3);
+                                    @endphp
+                                    @if(count($topTags) > 0)
+                                        @foreach($topTags as $tag)
+                                            <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[9px] font-black uppercase tracking-wider border border-blue-100/50">
+                                                {{ $tag->name }}
+                                            </span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">No Tags</span>
+                                    @endif
+                                </div>
                             </td>
 
                             <!-- Total Visits -->
