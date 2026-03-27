@@ -69,9 +69,9 @@
                         <i data-lucide="home" class="w-5 h-5 {{ request()->routeIs('dashboard') ? 'text-[#4f46e5]' : '' }}"></i>
                         <span class="font-bold text-[13px]">Dashboard</span>
                     </a>
-                    <a href="{{ route('floor_plan') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('floor_plan') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="layout-grid" class="w-5 h-5 {{ request()->routeIs('floor_plan') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Floor Plan</span>
+                    <a href="{{ route('floor.index') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('floor.*') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 {{ request()->routeIs('floor.*') ? 'text-[#4f46e5]' : '' }}"></i>
+                        <span class="font-bold text-[13px]">Floor Management</span>
                     </a>
                     <a href="{{ route('customers') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('customers') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
                         <i data-lucide="contact" class="w-5 h-5 {{ request()->routeIs('customers') ? 'text-[#4f46e5]' : '' }}"></i>

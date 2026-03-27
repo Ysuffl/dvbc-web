@@ -22,16 +22,18 @@ class DemographicController extends Controller
         }
 
         $currentYear = request('year', $availableYears[0]);
-        $previousYear = $currentYear - 1;
+        $defaultPrev = in_array($currentYear - 1, $availableYears) ? $currentYear - 1 : ($availableYears[1] ?? ($availableYears[0] - 1));
+        $previousYear = request('compare_with', $defaultPrev);
         $years = [$previousYear, $currentYear];
 
         // 1. Age Segment
         $ageSegments = [
-            '<18'   => ['min' => 0, 'max' => 17],
-            '18-24' => ['min' => 18, 'max' => 24],
-            '25-34' => ['min' => 25, 'max' => 34],
-            '35-44' => ['min' => 35, 'max' => 44],
-            '45+'   => ['min' => 45, 'max' => 200],
+            '<18'     => ['min' => 0, 'max' => 17],
+            '18-24'   => ['min' => 18, 'max' => 24],
+            '25-34'   => ['min' => 25, 'max' => 34],
+            '35-44'   => ['min' => 35, 'max' => 44],
+            '45+'     => ['min' => 45, 'max' => 200],
+            'Unknown' => ['min' => -1, 'max' => -1],
         ];
 
         $ageData = [];
@@ -58,8 +60,9 @@ class DemographicController extends Controller
         ->get();
 
         $genders = [
-            'Male'   => [$previousYear => 0, $currentYear => 0],
-            'Female' => [$previousYear => 0, $currentYear => 0]
+            'Male'    => [$previousYear => 0, $currentYear => 0],
+            'Female'  => [$previousYear => 0, $currentYear => 0],
+            'Unknown' => [$previousYear => 0, $currentYear => 0],
         ];
 
         $totalPaxPerYear = [$previousYear => 0, $currentYear => 0];
@@ -72,18 +75,26 @@ class DemographicController extends Controller
 
             // Sort into age segments
             $age = $b->age;
-            foreach ($ageData as $key => &$data) {
-                if ($age >= $data['min'] && $age <= $data['max']) {
-                    $data[$year] += $b->total_pax;
-                    break;
+            if ($age === null) {
+                $ageData['Unknown'][$year] += $b->total_pax;
+            } else {
+                foreach ($ageData as $key => &$data) {
+                    if ($key === 'Unknown') continue;
+                    if ($age >= $data['min'] && $age <= $data['max']) {
+                        $data[$year] += $b->total_pax;
+                        break;
+                    }
                 }
             }
 
             // Genders
-            if (strtolower($b->gender) == 'male' || strtolower($b->gender) == 'laki-laki') {
+            $gender = strtolower($b->gender ?? '');
+            if ($gender == 'male' || $gender == 'laki-laki') {
                 $genders['Male'][$year] += $b->total_pax;
-            } elseif (strtolower($b->gender) == 'female' || strtolower($b->gender) == 'perempuan') {
+            } elseif ($gender == 'female' || $gender == 'perempuan') {
                 $genders['Female'][$year] += $b->total_pax;
+            } else {
+                $genders['Unknown'][$year] = ($genders['Unknown'][$year] ?? 0) + $b->total_pax;
             }
         }
 

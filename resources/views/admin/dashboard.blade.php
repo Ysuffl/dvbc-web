@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="space-y-8 animate-in fade-in duration-700"
-    x-data="{ showBookingModal: false, showEventModal: false, showInfoModal: false, selectedBooking: null }">
+    x-data="{ showBookingModal: false, showEventModal: false, showInfoModal: false, showEditBookingModal: false, selectedBooking: null, editBookingData: {} }">
     <!-- Top Section: Room Status & Stats -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Room Status -->
@@ -44,6 +44,9 @@
 
                     $currentBooking = $table->bookings->first();
                     $category = $currentBooking && $currentBooking->customer ? strtolower($currentBooking->customer->category) : null;
+                    if (!$currentBooking && $status === 'hold' && $table->holdByCustomer) {
+                        $category = strtolower($table->holdByCustomer->category);
+                    }
                     $bData = null;
                     if ($currentBooking) {
                         $bData = [
@@ -58,7 +61,36 @@
                     }
                 @endphp
                 <div class="aspect-square relative flex items-center justify-center rounded-2xl border text-sm font-extrabold transition-all hover:scale-110 active:scale-95 cursor-pointer {{ $statusClass }}"
-                    @if($currentBooking) @click="selectedBooking = { status: '{{ $bData['status'] }}', pax: '{{ $bData['pax'] }}', customer: { name: '{{ $bData['customer']['name'] }}', category: '{{ $bData['customer']['category'] }}', phone: '{{ $bData['customer']['phone'] }}' } }; showInfoModal = true" @endif>
+                    @if($currentBooking) @click="selectedBooking = { 
+                        id: '{{ $currentBooking->id }}',
+                        status: '{{ $currentBooking->status }}', 
+                        pax: '{{ $currentBooking->pax }}', 
+                        start_time: '{{ $currentBooking->start_time->format('Y-m-d\TH:i') }}',
+                        end_time: '{{ $currentBooking->end_time->format('Y-m-d\TH:i') }}',
+                        notes: '{{ addslashes($currentBooking->notes) }}',
+                        customer: { 
+                            name: '{{ addslashes($currentBooking->customer->name ?? 'Unknown') }}', 
+                            category: '{{ $currentBooking->customer->category ?? 'REGULAR' }}', 
+                            phone: '{{ $currentBooking->customer->phone ?? 'N/A' }}',
+                            age: '{{ $currentBooking->customer->age }}',
+                            gender: '{{ $currentBooking->customer->gender }}'
+                        } 
+                    }; showInfoModal = true" 
+                    @elseif($status === 'hold' && $table->holdByCustomer) @click="selectedBooking = {
+                        id: 'hold_{{ $table->id }}',
+                        status: 'hold',
+                        pax: '-',
+                        start_time: '{{ $table->updated_at ? $table->updated_at->format('Y-m-d\TH:i') : '' }}',
+                        end_time: '{{ $table->hold_until ? $table->hold_until->format('Y-m-d\TH:i') : '' }}',
+                        notes: 'Hold until: {{ $table->hold_until ? $table->hold_until->format('H:i') : 'Unknown' }}',
+                        customer: {
+                            name: '{{ addslashes($table->holdByCustomer->name ?? 'Unknown') }}',
+                            category: '{{ $table->holdByCustomer->category ?? 'REGULER' }}',
+                            phone: '{{ $table->holdByCustomer->phone ?? 'N/A' }}',
+                            age: '{{ $table->holdByCustomer->age ?? '' }}',
+                            gender: '{{ $table->holdByCustomer->gender ?? '' }}'
+                        }
+                    }; showInfoModal = true" @endif>
                     {{ $table->code }}
 
                     @if($category)
@@ -460,7 +492,21 @@
                             ];
                         @endphp
                         <tr class="group hover:bg-slate-50/50 transition-colors cursor-pointer"
-                            @click="selectedBooking = { status: '{{ $bRowData['status'] }}', pax: '{{ $bRowData['pax'] }}', customer: { name: '{{ $bRowData['customer']['name'] }}', category: '{{ $bRowData['customer']['category'] }}', phone: '{{ $bRowData['customer']['phone'] }}' } }; showInfoModal = true">
+                            @click="selectedBooking = { 
+                                id: '{{ $booking->id }}',
+                                status: '{{ $booking->status }}', 
+                                pax: '{{ $booking->pax }}', 
+                                start_time: '{{ $booking->start_time->format('Y-m-d\TH:i') }}',
+                                end_time: '{{ $booking->end_time->format('Y-m-d\TH:i') }}',
+                                notes: '{{ addslashes($booking->notes) }}',
+                                customer: { 
+                                    name: '{{ addslashes($booking->customer->name ?? 'Unknown') }}', 
+                                    category: '{{ $booking->customer->category ?? 'REGULAR' }}', 
+                                    phone: '{{ $booking->customer->phone ?? 'N/A' }}',
+                                    age: '{{ $booking->customer->age }}',
+                                    gender: '{{ $booking->customer->gender }}'
+                                } 
+                            }; showInfoModal = true">
                             <td class="py-6 px-4"><input type="checkbox"
                                     class="rounded-md border-slate-200 text-blue-500 focus:ring-blue-500 ring-offset-0">
                             </td>
@@ -470,27 +516,10 @@
                             </td>
                             <td class="py-6 px-4">
                                 @php
-                                $cat = strtoupper($booking->customer->category ?? 'REGULAR');
-                                $catColor = 'bg-slate-50 text-slate-400';
-                                $catIcon = 'user'; // Default icon
-                                if ($cat === 'PRIORITAS' || $cat === 'PRIORITY') { $catColor = 'bg-amber-50 text-amber-600'; $catIcon = 'crown';
-                                }
-                                elseif ($cat === 'EVENT') { $catColor = 'bg-indigo-50 text-indigo-600'; $catIcon =
-                                'megaphone'; }
-                                elseif ($cat === 'BIG_SPENDER' || $cat === 'BIG SPENDER') { $catColor = 'bg-emerald-50 text-emerald-600'; $catIcon
-                                = 'dollar-sign'; }
-                                elseif ($cat === 'DRINKER') { $catColor = 'bg-blue-50 text-blue-600'; $catIcon =
-                                'glass-water'; }
-                                elseif ($cat === 'PARTY') { $catColor = 'bg-purple-50 text-purple-600'; $catIcon =
-                                'sparkles'; }
-                                elseif ($cat === 'DINNER') { $catColor = 'bg-orange-50 text-orange-600'; $catIcon =
-                                'utensils-crossed'; }
-                                elseif ($cat === 'LUNCH') { $catColor = 'bg-rose-50 text-rose-600'; $catIcon =
-                                'utensils'; }
-                                elseif ($cat === 'FAMILY') { $catColor = 'bg-cyan-50 text-cyan-600'; $catIcon = 'users';
-                                }
-                                elseif ($cat === 'YOUNGSTER') { $catColor = 'bg-pink-50 text-pink-600'; $catIcon =
-                                'smile'; }
+                                $cat = strtoupper($booking->customer->category ?? 'REGULER');
+                                $catData = $categoryMap[$cat] ?? null;
+                                $catColor = $catData ? $catData->bg_color . ' ' . $catData->text_color : 'bg-slate-50 text-slate-400';
+                                $catIcon  = $catData?->icon ?? 'tag';
                                 @endphp
                                 <span
                                     class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
@@ -531,8 +560,9 @@
                                 @php
                                 $status = strtolower($booking->status);
                                 $statusColor = 'bg-slate-50 text-slate-400';
-                                if ($status === 'confirmed') $statusColor = 'bg-emerald-50 text-emerald-600';
-                                elseif ($status === 'pending') $statusColor = 'bg-amber-50 text-amber-600';
+                                if ($status === 'confirmed' || $status === 'completed' || $status === 'billed') $statusColor = 'bg-emerald-50 text-emerald-600';
+                                elseif ($status === 'booked' || $status === 'pending') $statusColor = 'bg-amber-50 text-amber-600';
+                                elseif ($status === 'hold') $statusColor = 'bg-blue-50 text-blue-600';
                                 elseif ($status === 'cancelled') $statusColor = 'bg-rose-50 text-rose-600';
                                 @endphp
                                 <span
@@ -1145,14 +1175,116 @@
                                     </div>
                                 </div>
 
-                                <div class="pt-4">
-                                    <button @click="showInfoModal = false; selectedBooking = null" class="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl text-base font-black hover:bg-slate-200 transition-all active:scale-95 leading-none">
+                                 <div class="flex gap-4 pt-4">
+                                    <button x-show="selectedBooking.status !== 'hold'" @click="showInfoModal = false; showEditBookingModal = true; editBookingData = JSON.parse(JSON.stringify(selectedBooking))"
+                                            class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-base font-black hover:bg-blue-700 transition-all active:scale-95 leading-none shadow-lg shadow-blue-200">
+                                        Edit Booking
+                                    </button>
+                                    <button @click="showInfoModal = false; selectedBooking = null"
+                                            class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-base font-black hover:bg-slate-200 transition-all active:scale-95 leading-none">
                                         Close
                                     </button>
                                 </div>
                             </div>
                         </template>
                     </div>
+                </div>
+            </div>
+        </div>
+        <!-- Edit Booking Modal -->
+        <div x-show="showEditBookingModal" class="fixed inset-0 z-[110] overflow-y-auto" x-cloak>
+            <div class="flex items-center justify-center min-h-screen px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="showEditBookingModal" @click="showEditBookingModal = false" class="fixed inset-0 transition-opacity">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                </div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
+
+                <div x-show="showEditBookingModal" class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    <form :action="'/bookings/' + editBookingData.id" method="POST" class="p-10">
+                        @csrf
+                        @method('PUT')
+                        <div class="flex justify-between items-center mb-10">
+                            <div>
+                                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Edit Booking</h3>
+                                <p class="text-sm text-slate-400 font-medium mt-1">Update reservation details</p>
+                            </div>
+                            <button type="button" @click="showEditBookingModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Guest Name</label>
+                                <input type="text" name="customer_name" x-model="editBookingData.customer.name" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
+                                <select name="customer_category" x-model="editBookingData.customer.category" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
+                                        <option value="{{ $cat }}">{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Status</label>
+                                <select name="status" x-model="editBookingData.status" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    @foreach(['PENDING', 'CONFIRMED', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
+                                        <option value="{{ $st }}">{{ $st }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact Number</label>
+                                <input type="text" name="phone" x-model="editBookingData.customer.phone" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
+                                    <input type="number" name="age" x-model="editBookingData.customer.age" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
+                                    <select name="gender" x-model="editBookingData.customer.gender" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                        <option value="">Not Set</option>
+                                        <option value="MALE">Laki-laki</option>
+                                        <option value="FEMALE">Perempuan</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check In</label>
+                                <input type="datetime-local" name="start_time" x-model="editBookingData.start_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check Out</label>
+                                <input type="datetime-local" name="end_time" x-model="editBookingData.end_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">PAX</label>
+                                <input type="number" name="pax" x-model="editBookingData.pax" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Notes</label>
+                                <textarea name="notes" x-model="editBookingData.notes" rows="2" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="pt-8">
+                            <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-2xl text-base font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

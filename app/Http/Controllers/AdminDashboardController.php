@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Table;
 use App\Models\Customer;
+use App\Models\MasterCategory;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -25,7 +26,7 @@ class AdminDashboardController extends Controller
                 ->whereNotIn(DB::raw('LOWER(CAST(status AS TEXT))'),
                 ['cancelled', 'no show', 'completed', 'billed', 'ok', 'finished', 'done', 'paid'])
                 ->with('customer');
-        }])
+        }, 'holdByCustomer'])
             ->orderBy('code')
             ->get();
 
@@ -204,10 +205,18 @@ class AdminDashboardController extends Controller
         }
 
         $allTables = Table::orderBy('code')->get();
-
         $customers = Customer::orderBy('name')->get();
 
-        return view('admin.dashboard', compact('tables', 'recentBookings', 'stats', 'floors', 'selectedFloor', 'allTables', 'categoryStats', 'listTotals', 'allFilteredBookings', 'customers'));
+        // Load master_categories as a lookup map (keyed by uppercase name)
+        // Used by Blade to render dynamic color/icon instead of hardcoded if-else
+        $categoryMap = MasterCategory::all()
+            ->keyBy(fn($c) => strtoupper($c->name));
+
+        return view('admin.dashboard', compact(
+            'tables', 'recentBookings', 'stats', 'floors', 'selectedFloor',
+            'allTables', 'categoryStats', 'listTotals', 'allFilteredBookings',
+            'customers', 'categoryMap'
+        ));
     }
 
     public function storeBooking(Request $request)
@@ -218,6 +227,7 @@ class AdminDashboardController extends Controller
             'customer_category' => 'required|string',
             'phone' => 'nullable|string',
             'age' => 'nullable|integer',
+            'gender' => 'nullable|string',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
@@ -237,7 +247,8 @@ class AdminDashboardController extends Controller
         [
             'name' => $validated['customer_name'],
             'category' => $dbCategory,
-            'age' => $validated['age'] ?? null
+            'age' => $validated['age'] ?? null,
+            'gender' => $validated['gender'] ?? null
         ]
         );
 
@@ -265,6 +276,67 @@ class AdminDashboardController extends Controller
         return redirect()->back()->with('success', 'Booking added successfully');
     }
 
+    public function updateBooking(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_category' => 'required|string',
+            'phone' => 'nullable|string',
+            'age' => 'nullable|integer',
+            'gender' => 'nullable|string',
+            'pax' => 'required|integer|min:1',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'notes' => 'nullable|string',
+            'status' => 'required|string',
+        ]);
+
+        $booking = Booking::findOrFail($id);
+        
+        // Update Customer
+        $categoryMap = [
+            'REGULAR' => 'reguler',
+            'PRIORITY' => 'prioritas',
+            'BIG SPENDER' => 'big_spender',
+        ];
+        $dbCategory = $categoryMap[$validated['customer_category']] ?? str_replace(' ', '_', strtolower($validated['customer_category']));
+
+        $booking->customer->update([
+            'name' => $validated['customer_name'],
+            'category' => $dbCategory,
+            'age' => $validated['age'] ?? null,
+            'gender' => $validated['gender'] ?? null,
+            'phone' => $validated['phone'] ?? $booking->customer->phone
+        ]);
+
+        // Update Booking
+        $booking->update([
+            'pax' => $validated['pax'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'notes' => $validated['notes'],
+            'status' => strtolower($validated['status'])
+        ]);
+
+        // Sync Table Status
+        $table = Table::find($booking->table_id);
+        if ($table) {
+            $status = strtolower($validated['status']);
+            if (in_array($status, ['cancelled', 'completed', 'billed'])) {
+                $table->status = 'available';
+                $table->hold_until = null;
+                $table->hold_by_customer_id = null;
+            } elseif ($status === 'confirmed' || $status === 'pending') {
+                $table->status = 'booked';
+            } elseif ($status === 'arrived' || $status === 'occupied') {
+                $table->status = 'occupied';
+            }
+            $table->save();
+        }
+
+        return redirect()->back()->with('success', 'Booking updated successfully');
+    }
+
     public function storeEventBooking(Request $request)
     {
         $validated = $request->validate([
@@ -273,6 +345,7 @@ class AdminDashboardController extends Controller
             'customer_name' => 'required|string|max:255',
             'phone' => 'nullable|string',
             'age' => 'nullable|integer',
+            'gender' => 'nullable|string',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
@@ -284,7 +357,8 @@ class AdminDashboardController extends Controller
         [
             'name' => $validated['customer_name'],
             'category' => 'EVENT',
-            'age' => $validated['age'] ?? null
+            'age' => $validated['age'] ?? null,
+            'gender' => $validated['gender'] ?? null
         ]
         );
 

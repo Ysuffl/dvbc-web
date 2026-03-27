@@ -10,14 +10,28 @@
         </div>
         
         <!-- Year Filter -->
-        <form method="GET" action="{{ route('demographics') }}" class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-            <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
-            <span class="text-sm font-semibold text-slate-600">Comparison Year:</span>
-            <select name="year" onchange="this.form.submit()" class="bg-transparent text-sm font-bold text-slate-800 border-0 focus:ring-0 cursor-pointer outline-none">
-                @foreach($availableYears as $y)
-                    <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                @endforeach
-            </select>
+        <form method="GET" action="{{ route('demographics') }}" class="flex flex-wrap items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-500">Base Year:</span>
+                <select name="year" onchange="this.form.submit()" class="bg-slate-50 text-sm font-black text-slate-800 border-none rounded-lg focus:ring-2 focus:ring-slate-100 cursor-pointer outline-none px-3 py-1">
+                    @foreach($availableYears as $y)
+                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="h-4 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+
+            <div class="flex items-center gap-2">
+                <i data-lucide="repeat" class="w-4 h-4 text-slate-400"></i>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-500">Compare With:</span>
+                <select name="compare_with" onchange="this.form.submit()" class="bg-slate-50 text-sm font-black text-slate-800 border-none rounded-lg focus:ring-2 focus:ring-slate-100 cursor-pointer outline-none px-3 py-1">
+                    @foreach($availableYears as $y)
+                        <option value="{{ $y }}" {{ $previousYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endforeach
+                </select>
+            </div>
         </form>
     </div>
 

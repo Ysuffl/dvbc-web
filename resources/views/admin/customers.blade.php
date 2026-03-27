@@ -4,7 +4,9 @@
 <div class="space-y-8 animate-in fade-in duration-700" 
      x-data="{ 
         showProgressModal: false, 
+        showEditModal: false,
         selectedCust: {}, 
+        editCust: { id: '', name: '', phone: '', gender: '', age: '' },
         levels: {{ $levels->toJson() }},
         get progressPercentage() {
             if (!this.selectedCust.total_spent) return 0;
@@ -88,13 +90,11 @@
                         @foreach($customers as $c)
                         @php
                             $latest = $c->bookings->first();
-                            $cat = strtoupper($c->masterLevel->name ?? 'BRONZE');
-                            $catColor = 'bg-slate-50 text-slate-400';
-                            $catIcon = 'award';
-                            if ($cat === 'PLATINUM') { $catColor = 'bg-blue-100 text-blue-800'; $catIcon = 'crown'; }
-                            elseif ($cat === 'GOLD') { $catColor = 'bg-yellow-200 text-yellow-800'; $catIcon = 'award'; }
-                            elseif ($cat === 'SILVER') { $catColor = 'bg-slate-200 text-slate-800'; $catIcon = 'star'; }
-                            elseif ($cat === 'BRONZE') { $catColor = 'bg-orange-100 text-orange-800'; $catIcon = 'shield'; }
+                            // Level badge: ambil dari master_levels.badge_color (bukan hardcode)
+                            $levelName  = $c->masterLevel->name ?? 'Bronze';
+                            $levelColor = $c->masterLevel->badge_color ?? 'bg-orange-100 text-orange-800';
+                            $catIconMap = ['Bronze'=>'shield','Silver'=>'star','Gold'=>'award','Platinum'=>'crown'];
+                            $catIcon    = $catIconMap[$levelName] ?? 'award';
                         @endphp
                         <tr class="group hover:scale-[1.005] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
                             <!-- Guest Name -->
@@ -112,9 +112,9 @@
 
                             <!-- Level -->
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors">
-                                <span class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 w-fit">
+                                <span class="px-3 py-1.5 {{ $levelColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 w-fit">
                                     <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
-                                    {{ $cat }}
+                                    {{ $levelName }}
                                 </span>
                             </td>
 
@@ -144,9 +144,10 @@
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors">
                                 <div class="flex flex-wrap gap-1">
                                     @php
-                                        $topTags = $c->topTags(3);
+                                        // Gunakan data dari bulk query (tidak ada N+1 lagi)
+                                        $topTags = $rawTopTags[$c->id] ?? collect();
                                     @endphp
-                                    @if(count($topTags) > 0)
+                                    @if($topTags->isNotEmpty())
                                         @foreach($topTags as $tag)
                                             <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[9px] font-black uppercase tracking-wider border border-blue-100/50">
                                                 {{ $tag->name }}
@@ -200,9 +201,20 @@
                                         </a>
                                     @endif
                                     <button 
+                                        @click="editCust = { 
+                                            id: '{{ $c->id }}',
+                                            name: '{{ $c->name }}', 
+                                            phone: '{{ $c->phone }}',
+                                            gender: '{{ $c->gender }}',
+                                            age: '{{ $c->age }}'
+                                        }; showEditModal = true; $nextTick(() => lucide.createIcons())"
+                                        class="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-emerald-500 hover:border-emerald-200 rounded-xl transition-all group-hover:scale-110 active:scale-95">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button 
                                         @click="selectedCust = { 
                                             name: '{{ $c->name }}', 
-                                            level: '{{ $cat }}', 
+                                            level: '{{ $levelName }}', 
                                             total_spent: {{ $c->total_spent ?? 0 }}, 
                                             visits: {{ $c->visits_count ?? 0 }},
                                             phone: '{{ $c->phone }}',
@@ -323,6 +335,88 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showEditModal" 
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 transition-opacity" @click="showEditModal = false">
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
+
+            <div x-show="showEditModal" 
+                 x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+                
+                <form :action="'/customers/' + editCust.id" method="POST" class="p-8 sm:p-12">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-800 tracking-tighter">Edit Customer</h3>
+                            <p class="text-slate-400 font-bold text-sm mt-1">Update guest profile information</p>
+                        </div>
+                        <button type="button" @click="showEditModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Name -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                            <input type="text" name="name" x-model="editCust.name" required
+                                   class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                            <input type="text" name="phone" x-model="editCust.phone"
+                                   class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Gender -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gender</label>
+                                <select name="gender" x-model="editCust.gender"
+                                        class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all">
+                                    <option value="">Not Set</option>
+                                    <option value="MALE">Laki-laki</option>
+                                    <option value="FEMALE">Perempuan</option>
+                                </select>
+                            </div>
+
+                            <!-- Age -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Age (Years)</label>
+                                <input type="number" name="age" x-model="editCust.age"
+                                       class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 flex gap-4">
+                        <button type="button" @click="showEditModal = false" 
+                                class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-xs font-black hover:bg-slate-200 transition-all uppercase tracking-widest">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="flex-[2] py-4 bg-blue-600 text-white rounded-2xl text-xs font-black hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-200">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
