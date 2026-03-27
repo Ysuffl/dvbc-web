@@ -23,5 +23,7 @@ class DatabaseSeeder extends Seeder
             'role' => 'ADMIN',
             'is_active' => true,
         ]);
+
+        $this->call(FloorPlanSeeder::class);
     }
 }

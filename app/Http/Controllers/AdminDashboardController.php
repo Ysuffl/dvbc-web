@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Table;
+use App\Models\MasterTag;
 use App\Models\Customer;
 use App\Models\MasterCategory;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -77,7 +80,7 @@ class AdminDashboardController extends Controller
             });
 
         // Booking List with filters
-        $recentBookingsQuery = Booking::with(['tableModel', 'customer']);
+        $recentBookingsQuery = Booking::with(['tableModel', 'customer', 'tags']);
 
         if ($request->filled('search')) {
             $search = $request->get('search');
@@ -101,7 +104,6 @@ class AdminDashboardController extends Controller
         if ($request->filled('category')) {
             $category = strtolower($request->get('category'));
 
-            // Map the frontend categories back to what the database holds
             $categoryMap = [
                 'regular' => 'reguler',
                 'priority' => 'prioritas',
@@ -110,25 +112,40 @@ class AdminDashboardController extends Controller
 
             $dbCategory = $categoryMap[$category] ?? str_replace(' ', '_', $category);
 
-            $recentBookingsQuery->whereHas('customer', function ($q) use ($dbCategory) {
-                // Use CAST to TEXT to avoid PostgreSQL enum type comparison error
-                $q->whereRaw('CAST(category AS TEXT) ILIKE ?', [$dbCategory]);
-            });
+            $recentBookingsQuery->whereRaw('CAST(category AS TEXT) ILIKE ?', [$dbCategory]);
         }
 
         $period = $request->get('period', 'this_week');
-        if ($period == 'today') {
-            $recentBookingsQuery->whereDate('start_time', today());
+        if ($period == 'last_hour') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now()->subHour(), Carbon::now()]);
+        }
+        elseif ($period == 'last_30_mins') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now()->subMinutes(30), Carbon::now()]);
+        }
+        elseif ($period == 'last_15_mins') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now()->subMinutes(15), Carbon::now()]);
+        }
+        elseif ($period == 'next_hour') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now(), Carbon::now()->addHour()]);
+        }
+        elseif ($period == 'next_30_mins') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now(), Carbon::now()->addMinutes(30)]);
+        }
+        elseif ($period == 'next_15_mins') {
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now(), Carbon::now()->addMinutes(15)]);
+        }
+        elseif ($period == 'today') {
+            $recentBookingsQuery->whereDate('start_time', Carbon::today());
         }
         elseif ($period == 'this_week') {
-            $recentBookingsQuery->whereBetween('start_time', [now()->startOfWeek(), now()->endOfWeek()]);
+            $recentBookingsQuery->whereBetween('start_time', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
         }
         elseif ($period == 'this_month') {
-            $recentBookingsQuery->whereMonth('start_time', now()->month)
-                ->whereYear('start_time', now()->year);
+            $recentBookingsQuery->whereMonth('start_time', Carbon::now()->month)
+                ->whereYear('start_time', Carbon::now()->year);
         }
         elseif ($period == 'this_year') {
-            $recentBookingsQuery->whereYear('start_time', now()->year);
+            $recentBookingsQuery->whereYear('start_time', Carbon::now()->year);
         }
 
         $sort = $request->get('sort', 'desc');
@@ -200,22 +217,22 @@ class AdminDashboardController extends Controller
         // Category breakdown (filtered & unique)
         $categoryStats = [];
         foreach ($uniqueStatsGroups as $g) {
-            $cat = strtoupper($g['first']->customer->category ?? 'REGULER');
+            $cat = strtoupper($g['first']->category ?? 'REGULER');
             $categoryStats[$cat] = ($categoryStats[$cat] ?? 0) + 1;
         }
 
         $allTables = Table::orderBy('code')->get();
         $customers = Customer::orderBy('name')->get();
 
-        // Load master_categories as a lookup map (keyed by uppercase name)
-        // Used by Blade to render dynamic color/icon instead of hardcoded if-else
         $categoryMap = MasterCategory::all()
             ->keyBy(fn($c) => strtoupper($c->name));
+
+        $tags = MasterTag::all()->groupBy('group_name');
 
         return view('admin.dashboard', compact(
             'tables', 'recentBookings', 'stats', 'floors', 'selectedFloor',
             'allTables', 'categoryStats', 'listTotals', 'allFilteredBookings',
-            'customers', 'categoryMap'
+            'customers', 'categoryMap', 'tags'
         ));
     }
 
@@ -232,6 +249,8 @@ class AdminDashboardController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'notes' => 'nullable|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'exists:master_tags,id',
         ]);
 
         $categoryMap = [
@@ -243,19 +262,16 @@ class AdminDashboardController extends Controller
         $dbCategory = $categoryMap[$validated['customer_category']] ?? str_replace(' ', '_', strtolower($validated['customer_category']));
 
         $customer = Customer::firstOrCreate(
-        ['phone' => $validated['phone'] ?? ''],
-        [
-            'name' => $validated['customer_name'],
-            'category' => $dbCategory,
-            'age' => $validated['age'] ?? null,
-            'gender' => $validated['gender'] ?? null
-        ]
+            ['phone' => $validated['phone'] ?? ''],
+            [
+                'name' => $validated['customer_name'],
+                'age' => $validated['age'] ?? null,
+                'gender' => $validated['gender'] ?? null
+            ]
         );
 
+        // Update profile if changed (No more category)
         $updates = [];
-        if ($customer->category !== $dbCategory) {
-            $updates['category'] = $dbCategory;
-        }
         if (isset($validated['age']) && $customer->age !== (int)$validated['age']) {
             $updates['age'] = (int)$validated['age'];
         }
@@ -270,8 +286,13 @@ class AdminDashboardController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'notes' => $validated['notes'],
-            'status' => 'PENDING'
+            'status' => 'pending',
+            'category' => $dbCategory
         ]);
+
+        if ($request->has('tag_ids')) {
+            $booking->tags()->sync($request->tag_ids);
+        }
 
         return redirect()->back()->with('success', 'Booking added successfully');
     }
@@ -289,6 +310,8 @@ class AdminDashboardController extends Controller
             'end_time' => 'required|date|after:start_time',
             'notes' => 'nullable|string',
             'status' => 'required|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'exists:master_tags,id',
         ]);
 
         $booking = Booking::findOrFail($id);
@@ -303,7 +326,6 @@ class AdminDashboardController extends Controller
 
         $booking->customer->update([
             'name' => $validated['customer_name'],
-            'category' => $dbCategory,
             'age' => $validated['age'] ?? null,
             'gender' => $validated['gender'] ?? null,
             'phone' => $validated['phone'] ?? $booking->customer->phone
@@ -315,8 +337,13 @@ class AdminDashboardController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'notes' => $validated['notes'],
-            'status' => strtolower($validated['status'])
+            'status' => strtolower($validated['status']),
+            'category' => $dbCategory
         ]);
+
+        if ($request->has('tag_ids')) {
+            $booking->tags()->sync($request->tag_ids);
+        }
 
         // Sync Table Status
         $table = Table::find($booking->table_id);
@@ -350,22 +377,20 @@ class AdminDashboardController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'notes' => 'nullable|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'exists:master_tags,id',
         ]);
 
         $customer = Customer::firstOrCreate(
-        ['phone' => $validated['phone'] ?? ''],
-        [
-            'name' => $validated['customer_name'],
-            'category' => 'EVENT',
-            'age' => $validated['age'] ?? null,
-            'gender' => $validated['gender'] ?? null
-        ]
+            ['phone' => $validated['phone'] ?? ''],
+            [
+                'name' => $validated['customer_name'],
+                'age' => $validated['age'] ?? null,
+                'gender' => $validated['gender'] ?? null
+            ]
         );
 
         $updates = [];
-        if ($customer->category !== 'EVENT') {
-            $updates['category'] = 'EVENT';
-        }
         if (isset($validated['age']) && $customer->age !== (int)$validated['age']) {
             $updates['age'] = (int)$validated['age'];
         }
@@ -374,15 +399,20 @@ class AdminDashboardController extends Controller
         }
 
         foreach ($request->table_ids as $table_id) {
-            Booking::create([
+            $booking = Booking::create([
                 'table_id' => $table_id,
                 'customer_id' => $customer->id,
                 'pax' => $validated['pax'],
                 'start_time' => $validated['start_time'],
                 'end_time' => $validated['end_time'],
                 'notes' => $validated['notes'],
-                'status' => 'PENDING'
+                'status' => 'pending',
+                'category' => 'event'
             ]);
+
+            if ($request->has('tag_ids')) {
+                $booking->tags()->sync($request->tag_ids);
+            }
         }
 
         return redirect()->back()->with('success', 'Event Booking added successfully');

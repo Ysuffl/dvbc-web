@@ -9,9 +9,8 @@ class Booking extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'table_id', 'customer_id', 'customer_name', 'customer_category', 
-        'phone', 'pax', 'start_time', 'end_time', 'billed_at', 
-        'status', 'notes', 'cancel_reason', 'billed_price'
+        'table_id', 'customer_id', 'pax', 'start_time', 'end_time', 'billed_at', 
+        'status', 'category', 'notes', 'cancel_reason', 'billed_price'
     ];
 
     protected $casts = [

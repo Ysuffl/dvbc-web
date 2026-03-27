@@ -173,10 +173,6 @@ class FloorController extends Controller
         return response()->json(['status' => 'success', 'updated' => count($payload)]);
     }
 
-    // ─────────────────────────────────────────────
-    // UPDATE MIN SPENDING (quick update dari UI)
-    // ─────────────────────────────────────────────
-
     public function updateMinSpending(Request $request, $id)
     {
         $request->validate([
@@ -187,5 +183,21 @@ class FloorController extends Controller
         $table->update(['min_spending' => $request->min_spending]);
 
         return back()->with('success', "Minimum cash meja {$table->code} diperbarui menjadi Rp " . number_format($request->min_spending, 0, ',', '.'));
+    }
+
+    public function bulkUpdateMinSpending(Request $request)
+    {
+        $request->validate([
+            'table_ids'    => 'required|array',
+            'table_ids.*'  => 'exists:tables,id',
+            'min_spending' => 'required|numeric|min:0',
+        ]);
+
+        Table::whereIn('id', $request->table_ids)->update([
+            'min_spending' => $request->min_spending
+        ]);
+
+        $count = count($request->table_ids);
+        return back()->with('success', "Berhasil memperbarui {$count} meja secara massal.");
     }
 }

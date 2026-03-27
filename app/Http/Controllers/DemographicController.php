@@ -11,7 +11,7 @@ class DemographicController extends Controller
 {
     public function index()
     {
-        $availableYears = Booking::select(DB::raw('EXTRACT(YEAR FROM start_time) as year'))
+        $availableYears = Customer::select(DB::raw('EXTRACT(YEAR FROM created_at) as year'))
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year')
@@ -27,6 +27,7 @@ class DemographicController extends Controller
         $years = [$previousYear, $currentYear];
 
         // 1. Age Segment
+        // ... ageSegments definition ...
         $ageSegments = [
             '<18'     => ['min' => 0, 'max' => 17],
             '18-24'   => ['min' => 18, 'max' => 24],
@@ -47,16 +48,15 @@ class DemographicController extends Controller
             ];
         }
 
-        // Get customers with bookings in 2025 and 2026. We will count sum of pax
-        $bookings = Booking::select(
-            DB::raw('EXTRACT(YEAR FROM start_time) as year'),
-            'customers.age',
-            'customers.gender',
-            DB::raw('SUM(bookings.pax) as total_pax')
+        // Get customers directly for demographics regardless of bookings
+        $bookings = Customer::select(
+            DB::raw('EXTRACT(YEAR FROM created_at) as year'),
+            'age',
+            'gender',
+            DB::raw('COUNT(id) as total_cust')
         )
-        ->join('customers', 'customers.id', '=', 'bookings.customer_id')
-        ->whereIn(DB::raw('EXTRACT(YEAR FROM start_time)'), $years)
-        ->groupBy('year', 'customers.age', 'customers.gender')
+        ->whereIn(DB::raw('EXTRACT(YEAR FROM created_at)'), $years)
+        ->groupBy('year', 'age', 'gender')
         ->get();
 
         $genders = [
@@ -65,23 +65,23 @@ class DemographicController extends Controller
             'Unknown' => [$previousYear => 0, $currentYear => 0],
         ];
 
-        $totalPaxPerYear = [$previousYear => 0, $currentYear => 0];
+        $totalCustPerYear = [$previousYear => 0, $currentYear => 0];
 
         foreach ($bookings as $b) {
             if (!in_array($b->year, $years)) continue;
             
             $year = $b->year;
-            $totalPaxPerYear[$year] += $b->total_pax;
+            $totalCustPerYear[$year] += $b->total_cust;
 
             // Sort into age segments
             $age = $b->age;
             if ($age === null) {
-                $ageData['Unknown'][$year] += $b->total_pax;
+                $ageData['Unknown'][$year] += $b->total_cust;
             } else {
                 foreach ($ageData as $key => &$data) {
                     if ($key === 'Unknown') continue;
                     if ($age >= $data['min'] && $age <= $data['max']) {
-                        $data[$year] += $b->total_pax;
+                        $data[$year] += $b->total_cust;
                         break;
                     }
                 }
@@ -90,18 +90,18 @@ class DemographicController extends Controller
             // Genders
             $gender = strtolower($b->gender ?? '');
             if ($gender == 'male' || $gender == 'laki-laki') {
-                $genders['Male'][$year] += $b->total_pax;
+                $genders['Male'][$year] += $b->total_cust;
             } elseif ($gender == 'female' || $gender == 'perempuan') {
-                $genders['Female'][$year] += $b->total_pax;
+                $genders['Female'][$year] += $b->total_cust;
             } else {
-                $genders['Unknown'][$year] = ($genders['Unknown'][$year] ?? 0) + $b->total_pax;
+                $genders['Unknown'][$year] = ($genders['Unknown'][$year] ?? 0) + $b->total_cust;
             }
         }
 
         // Calculate Percentages and Insights for Age
         foreach ($ageData as $key => &$data) {
-            $data['prev_pct'] = $totalPaxPerYear[$previousYear] > 0 ? round(($data[$previousYear] / $totalPaxPerYear[$previousYear]) * 100) : 0;
-            $data['curr_pct'] = $totalPaxPerYear[$currentYear] > 0 ? round(($data[$currentYear] / $totalPaxPerYear[$currentYear]) * 100) : 0;
+            $data['prev_pct'] = $totalCustPerYear[$previousYear] > 0 ? round(($data[$previousYear] / $totalCustPerYear[$previousYear]) * 100) : 0;
+            $data['curr_pct'] = $totalCustPerYear[$currentYear] > 0 ? round(($data[$currentYear] / $totalCustPerYear[$currentYear]) * 100) : 0;
 
             // Default insight logic based on image
             $diff = $data['curr_pct'] - $data['prev_pct'];
@@ -126,8 +126,8 @@ class DemographicController extends Controller
 
         // Calculate Percentages and Insights for Gender
         foreach ($genders as $key => &$data) {
-            $data['prev_pct'] = $totalPaxPerYear[$previousYear] > 0 ? round(($data[$previousYear] / $totalPaxPerYear[$previousYear]) * 100) : 0;
-            $data['curr_pct'] = $totalPaxPerYear[$currentYear] > 0 ? round(($data[$currentYear] / $totalPaxPerYear[$currentYear]) * 100) : 0;
+            $data['prev_pct'] = $totalCustPerYear[$previousYear] > 0 ? round(($data[$previousYear] / $totalCustPerYear[$previousYear]) * 100) : 0;
+            $data['curr_pct'] = $totalCustPerYear[$currentYear] > 0 ? round(($data[$currentYear] / $totalCustPerYear[$currentYear]) * 100) : 0;
             
             $diff = $data['curr_pct'] - $data['prev_pct'];
             if ($diff <= -5) {
@@ -144,6 +144,50 @@ class DemographicController extends Controller
 
 
 
+
+        if (request('export')) {
+            $data = [
+                ['Demographics & Insights Report'],
+                ['Visitor Segments Comparison (' . $previousYear . ' vs ' . $currentYear . ')'],
+                ['Date Generated: ' . now()->format('d M Y H:i')],
+                [''],
+                ['3. Age Segment (Umur Tamu)'],
+                ['Age', (string)$previousYear, '%', (string)$currentYear, '%', 'Insight']
+            ];
+
+            foreach ($ageData as $age => $row) {
+                $data[] = [
+                    $age,
+                    $row[$previousYear],
+                    $row['prev_pct'] . '%',
+                    $row[$currentYear],
+                    $row['curr_pct'] . '%',
+                    strip_tags($row['insight'])
+                ];
+            }
+
+            $data[] = [''];
+            $data[] = ['Gender Dynamics (Tamu Berdasarkan Gender)'];
+            $data[] = ['Gender', (string)$previousYear, '%', (string)$currentYear, '%', 'Insight'];
+
+            foreach ($genders as $gender => $row) {
+                $data[] = [
+                    $gender,
+                    $row[$previousYear],
+                    $row['prev_pct'] . '%',
+                    $row[$currentYear],
+                    $row['curr_pct'] . '%',
+                    strip_tags($row['insight'])
+                ];
+            }
+
+            $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($data);
+            return response()->streamDownload(function() use ($xlsx) {
+                echo $xlsx;
+            }, 'demographics_report_' . $currentYear . '.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ]);
+        }
 
         return view('demographics.index', compact('ageData', 'genders', 'currentYear', 'previousYear', 'availableYears'));
     }

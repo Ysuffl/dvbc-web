@@ -7,7 +7,12 @@
         editCategory: { id: '', name: '', icon: '', bg_color: '', text_color: '' }, 
         showAddLevelModal: false, 
         showEditLevelModal: false, 
-        editLevel: { id: '', name: '', min_spending: 0, badge_color: '' }
+        editLevel: { id: '', name: '', min_spending: 0, badge_color: '' },
+        formatCurrency(val) {
+            if (!val && val !== 0) return '';
+            let s = val.toString().replace(/\D/g, '');
+            return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
     }">
         
         <!-- Header Section -->
@@ -232,9 +237,10 @@
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Level Name</label>
                             <input type="text" name="name" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-amber-500/10 transition-all" placeholder="e.g. Diamond">
                         </div>
-                        <div>
+                        <div x-data="{ localMin: '' }">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Minimum Spending (Rp)</label>
-                            <input type="number" name="min_spending" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-amber-500/10 transition-all" placeholder="e.g. 50000000">
+                            <input type="text" x-model="localMin" @input="localMin = formatCurrency($event.target.value)" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-amber-500/10 transition-all" placeholder="e.g. 50.000.000">
+                            <input type="hidden" name="min_spending" :value="localMin.replace(/\./g, '')">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Badge Color</label>
@@ -267,7 +273,8 @@
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Minimum Spending (Rp)</label>
-                            <input type="number" name="min_spending" x-model="editLevel.min_spending" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-amber-500/10 transition-all">
+                            <input type="text" :value="formatCurrency(editLevel.min_spending)" @input="editLevel.min_spending = $event.target.value.replace(/\D/g, ''); $event.target.value = formatCurrency(editLevel.min_spending)" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-amber-500/10 transition-all">
+                            <input type="hidden" name="min_spending" :value="editLevel.min_spending">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Badge Color</label>

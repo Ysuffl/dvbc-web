@@ -93,6 +93,8 @@
                     <div class="draggable absolute flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none group transition-all duration-200 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(79,70,229,0.3)] hover:-translate-y-1"
                          id="table_{{ $table->id }}"
                          data-id="{{ $table->id }}"
+                         @click="if(!isDragging) toggleSelect({{ $table->id }})"
+                         :class="selectedTables.includes({{ $table->id }}) ? 'ring-4 ring-indigo-600 border-indigo-600' : ''"
                          style="left: {{ $table->x_pos }}px; top: {{ $table->y_pos }}px;
                                 width: {{ $table->shape == 'circle' ? '140px' : '80px' }};
                                 height: {{ $table->shape == 'circle' ? '140px' : '80px' }};
@@ -138,11 +140,18 @@
     {{-- ── TABLE LIST (BOTTOM GRID) ───────────────────────────────────────── --}}
     <div class="w-full">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
-            <h2 class="font-black text-slate-800 text-lg mb-5 flex items-center justify-between">
+            <h2 class="font-black text-slate-800 text-lg mb-5 flex flex-wrap items-center justify-between gap-4">
                 <span class="flex items-center gap-2">
                     <i data-lucide="list-tree" class="w-5 h-5 text-indigo-500"></i>
                     Daftar Meja ({{ $tables->count() }})
                 </span>
+
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                        <input type="checkbox" x-model="allSelected" @change="toggleAll()" class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                        <span class="text-xs font-bold text-slate-600">Select All</span>
+                    </label>
+                </div>
             </h2>
 
             @if($tables->isEmpty())
@@ -158,10 +167,15 @@
                         {{-- Top Header --}}
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-100 {{ $table->shape == 'circle' ? 'rounded-full' : '' }} shrink-0">
-                                    <i data-lucide="{{ $table->shape == 'circle' ? 'circle' : 'square' }}"
-                                       class="w-5 h-5 {{ $table->status == 'available' ? 'text-slate-400' : 'text-blue-500' }}"></i>
-                                </div>
+                                <label class="relative flex items-center justify-center cursor-pointer group/check">
+                                    <input type="checkbox" :value="{{ $table->id }}" x-model="selectedTables"
+                                           class="peer w-5 h-5 opacity-0 absolute">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all shrink-0">
+                                        <i data-lucide="check" class="w-4 h-4 text-white hidden peer-checked:block"></i>
+                                        <i data-lucide="{{ $table->shape == 'circle' ? 'circle' : 'square' }}"
+                                           class="w-5 h-5 text-slate-300 peer-checked:hidden"></i>
+                                    </div>
+                                </label>
                                 <div>
                                     <div class="font-black text-slate-800 text-base leading-tight">{{ $table->code }}</div>
                                     <div class="flex items-center gap-1 text-[11px] text-slate-400 font-bold mt-0.5">
@@ -208,6 +222,50 @@
     </div>
 </div>
 
+{{-- ── FLOATING BULK BAR ────────────────────────────────────────────── --}}
+<div x-show="selectedTables.length > 0"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="translate-y-20 opacity-0"
+     x-transition:enter-end="translate-y-0 opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="translate-y-0 opacity-100"
+     x-transition:leave-end="translate-y-20 opacity-0"
+     class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] w-full max-w-2xl px-4">
+    <div class="bg-slate-900 shadow-2xl rounded-2xl border border-slate-800 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-600/30">
+                <span x-text="selectedTables.length"></span>
+            </div>
+            <div>
+                <div class="text-white font-black text-sm tracking-tight uppercase">Meja Terpilih</div>
+                <div class="text-slate-400 text-[10px] font-bold">Update harga secara massal</div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('floor.table.bulk_min_spending') }}" class="flex items-center gap-2 w-full md:w-auto">
+            @csrf @method('PATCH')
+            <template x-for="id in selectedTables" :key="id">
+                <input type="hidden" name="table_ids[]" :value="id">
+            </template>
+            
+            <div class="relative flex-1 md:flex-none">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500">Rp</span>
+                <input type="hidden" name="min_spending" id="bulk_min_val">
+                <input type="text" placeholder="Set Min Cash" 
+                       oninput="let v = this.value.replace(/\D/g, ''); document.getElementById('bulk_min_val').value = v || 0; this.value = v ? parseInt(v, 10).toLocaleString('id-ID') : '';"
+                       class="bg-slate-800 text-white border-slate-700 rounded-xl pl-8 pr-3 py-2 text-sm font-black w-full md:w-[160px] focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 whitespace-nowrap active:scale-95">
+                Apply Massal
+            </button>
+            <button type="button" @click="selectedTables = []; allSelected = false" class="text-slate-500 hover:text-white transition-colors p-2">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
 {{-- ══════════════════════════════════════════════════════════════════════ --}}
 {{-- MODAL: ADD / EDIT AREA --}}
 {{-- ══════════════════════════════════════════════════════════════════════ --}}
@@ -240,14 +298,29 @@
                 <input type="number" name="floor_number" :value="editAreaData.floor_number || 1" min="1" max="99" required
                        class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400">
             </div>
-            <div class="flex gap-3 pt-2">
-                <button type="button" @click="closeAreaModals()"
-                        class="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
-                <button type="submit"
-                        class="flex-1 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
-                    <span x-text="showEditAreaModal ? 'Simpan Perubahan' : 'Tambah Area'"></span>
-                </button>
+            <div class="flex flex-col gap-3 pt-2">
+                <div class="flex gap-3">
+                    <button type="button" @click="closeAreaModals()"
+                            class="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+                    <button type="submit"
+                            class="flex-1 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                        <span x-text="showEditAreaModal ? 'Simpan Perubahan' : 'Tambah Area'"></span>
+                    </button>
+                </div>
+                
+                <template x-if="showEditAreaModal">
+                    <button type="button" 
+                            @click="if(confirm('Hapus area ini? Seluruh data layout area ini akan hilang.')) { $refs.deleteAreaForm.submit() }"
+                            class="w-full py-2.5 rounded-xl border border-red-200 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Area
+                    </button>
+                </template>
             </div>
+        </form>
+
+        {{-- Hidden Delete Form --}}
+        <form x-ref="deleteAreaForm" :action="'/floor/areas/' + editAreaData.id" method="POST" class="hidden">
+            @csrf @method('DELETE')
         </form>
     </div>
 </div>
@@ -355,12 +428,39 @@ function floorManager() {
         showEditAreaModal: false,
         showAddTableModal: false,
         showEditTableModal: false,
+        selectedTables: [],
+        allSelected: false,
+        isDragging: false,
+        dragTimeout: null,
         editAreaData:  { id: null, name: '', description: '', floor_number: 1 },
         editTableData: { id: null, code: '', area_fk_id: {{ $selectedAreaId ?? 0 }}, shape: 'rectangle', capacity: 4, min_spending: 0 },
 
         init() {
             this.initDragDrop();
             lucide.createIcons();
+
+            // Watch selectedTables to sync allSelected
+            this.$watch('selectedTables', value => {
+                const tableCount = {{ $tables->count() }};
+                if (value.length === 0) this.allSelected = false;
+                else if (value.length === tableCount) this.allSelected = true;
+            });
+        },
+
+        toggleAll() {
+            if (this.allSelected) {
+                this.selectedTables = @json($tables->pluck('id'));
+            } else {
+                this.selectedTables = [];
+            }
+        },
+
+        toggleSelect(id) {
+            if (this.selectedTables.includes(id)) {
+                this.selectedTables = this.selectedTables.filter(t => t !== id);
+            } else {
+                this.selectedTables.push(id);
+            }
         },
 
         // ── Area modals ──
@@ -392,22 +492,28 @@ function floorManager() {
             const canvas   = document.getElementById('canvas');
             if (!canvas) return;
             const GRID     = 12;
-            let isDragging = false, el = null, ox = 0, oy = 0;
+            let el = null, ox = 0, oy = 0;
+            this.isDragging = false;
 
             document.querySelectorAll('.draggable').forEach(node => {
                 node.addEventListener('mousedown', e => {
                     if (e.target.closest('button, form, input, textarea')) return;
-                    isDragging = true;
+                    this.isDragging = false; // reset on every click
                     el = node;
                     ox = e.clientX - node.getBoundingClientRect().left;
                     oy = e.clientY - node.getBoundingClientRect().top;
-                    node.style.zIndex = 1000;
-                    node.classList.add('scale-110', 'opacity-80', 'ring-4', 'ring-indigo-400/30');
+                    
+                    // Delay setting isDragging to allow for a pure click
+                    this.dragTimeout = setTimeout(() => {
+                        this.isDragging = true;
+                        node.style.zIndex = 1000;
+                        node.classList.add('scale-110', 'opacity-80', 'ring-4', 'ring-indigo-400/30');
+                    }, 150);
                 });
             });
 
             document.addEventListener('mousemove', e => {
-                if (!isDragging || !el) return;
+                if (!el || !this.isDragging) return;
                 const rect = canvas.getBoundingClientRect();
                 let nx = Math.round((e.clientX - ox - rect.left) / GRID) * GRID;
                 let ny = Math.round((e.clientY - oy - rect.top)  / GRID) * GRID;
@@ -418,11 +524,13 @@ function floorManager() {
             });
 
             document.addEventListener('mouseup', () => {
+                clearTimeout(this.dragTimeout);
                 if (el) {
                     el.style.zIndex = 1;
                     el.classList.remove('scale-110', 'opacity-80', 'ring-4', 'ring-indigo-400/30');
                 }
-                isDragging = false;
+                // we don't reset this.isDragging immediately because we want the @click listener to see it
+                setTimeout(() => { this.isDragging = false; }, 0);
                 el = null;
             });
 

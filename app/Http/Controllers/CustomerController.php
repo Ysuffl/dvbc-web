@@ -17,6 +17,7 @@ class CustomerController extends Controller
                 'visits_count' => Booking::selectRaw('count(distinct start_time)')
                     ->whereColumn('customer_id', 'customers.id'),
             ])
+            ->selectRaw('*, (SELECT count(distinct start_time) FROM bookings WHERE customer_id = customers.id) + total_visits as total_combined_visits')
             ->withSum('bookings as total_spent', 'billed_price')
             ->with([
                 'masterLevel',
@@ -75,21 +76,75 @@ class CustomerController extends Controller
 
     public function export()
     {
-        $customers = Customer::withSum('bookings as total_spent', 'billed_price')
-            ->addSelect([
-                'visits_count' => Booking::selectRaw('count(distinct start_time)')
-                    ->whereColumn('customer_id', 'customers.id'),
-            ])
-            ->orderBy('name')
-            ->get();
+        $customers = Customer::withCount(['bookings as visits_count' => function($query) {
+            $query->select(DB::raw('count(distinct start_time)'));
+        }])->orderBy('name')->get();
 
-        $filename = "customers_report_" . date('Y-m-d') . ".xls";
+        $filename = "customers_import_template_" . date('Y-m-d') . ".xls";
         $headers  = [
             'Content-Type'        => 'application/vnd.ms-excel',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
+        // Format export according to user's image (name, phone, age, gender, total_spending, total_visits)
         return response()->view('admin.exports.customers', compact('customers'))->withHeaders($headers);
+    }
+
+    public function import(Request $request)
+    {
+        $data = $request->input('data', []);
+        
+        if (empty($data)) {
+            return response()->json(['status' => 'error', 'message' => 'No data received.'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Fetch levels once for calculation
+            $levels = MasterLevel::orderBy('min_spending', 'desc')->get();
+
+            foreach ($data as $row) {
+                // Bersihkan baris dari spasi berlebih
+                $row = array_map(fn($val) => is_string($val) ? trim($val) : $val, $row);
+                
+                if (empty($row['name'])) continue;
+
+                $totalSpending = !empty($row['total_spending']) ? (float)$row['total_spending'] : 0;
+                
+                // Determine Level ID by Spending
+                $levelId = 1; // Default Bronze
+                foreach ($levels as $lv) {
+                    if ($totalSpending >= $lv->min_spending) {
+                        $levelId = $lv->id;
+                        break;
+                    }
+                }
+
+                // Update or Create logic (No more category/last_status in Customer)
+                $customerData = [
+                    'name'           => $row['name'],
+                    'age'            => !empty($row['age']) ? (int)$row['age'] : null,
+                    'gender'         => strtoupper($row['gender'] ?? 'MALE'),
+                    'total_spending' => $totalSpending,
+                    'total_visits'   => !empty($row['total_visits']) ? (int)$row['total_visits'] : 0,
+                    'master_level_id'=> $levelId,
+                    'last_visit'     => date('Y-m-d H:i:s'),
+                ];
+
+                if (!empty($row['phone'])) {
+                    // Normalize phone (remove leading 0 if needed or handle as string)
+                    $phone = (string)$row['phone'];
+                    Customer::updateOrCreate(['phone' => $phone], $customerData);
+                } else {
+                    Customer::create($customerData);
+                }
+            }
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Data imported successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, $id)

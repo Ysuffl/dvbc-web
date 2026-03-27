@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="space-y-8 animate-in fade-in duration-700"
-    x-data="{ showBookingModal: false, showEventModal: false, showInfoModal: false, showEditBookingModal: false, selectedBooking: null, editBookingData: {} }">
+    x-data="{ showBookingModal: false, showEventModal: false, showInfoModal: false, showEditBookingModal: false, selectedBooking: null, editBookingData: { customer: {} } }">
     <!-- Top Section: Room Status & Stats -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Room Status -->
@@ -12,14 +12,28 @@
                 <h2 class="text-2xl font-black text-slate-800 tracking-tight">Table Status</h2>
                 <div class="flex items-center gap-3">
                     <form action="{{ route('dashboard') }}" method="GET" id="floorFilterForm">
-                        <select name="floor" onchange="this.form.submit()"
-                            class="px-5 py-2.5 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold border border-slate-100/50 hover:bg-slate-100 transition-colors focus:ring-0 cursor-pointer">
-                            @foreach($floors as $floor)
-                            <option value="{{ $floor }}" {{ $selectedFloor==$floor ? 'selected' : '' }}>
-                                {{ str_replace('_', ' ', strtoupper($floor)) }}
-                            </option>
-                            @endforeach
-                        </select>
+                        <input type="hidden" name="floor" value="{{ request('floor', $selectedFloor) }}" id="floorInput">
+                        <div class="relative group" x-data="{ open: false }">
+                            <button type="button" @click="open = !open"
+                                class="px-6 py-3.5 bg-white border border-slate-200 rounded-[1.25rem] text-[13px] font-black text-slate-800 flex items-center gap-3 shadow-sm hover:border-blue-200 transition-all">
+                                <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+                                <span>{{ $floors->contains(request('floor', $selectedFloor)) ? str_replace('_', ' ', strtoupper(request('floor', $selectedFloor))) : 'ALL AREA' }}</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300 group-hover:text-blue-400 transition-colors"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" 
+                                class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-y-2">
+                                <div class="p-2 space-y-1">
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ !request('floor') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                        onclick="document.getElementById('floorInput').value = ''; document.getElementById('floorFilterForm').submit()">ALL AREA</a>
+                                    @foreach($floors as $f)
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('floor', $selectedFloor) == $f ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                        onclick="document.getElementById('floorInput').value = '{{ $f }}'; document.getElementById('floorFilterForm').submit()">{{ str_replace('_', ' ', strtoupper($f)) }}</a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -43,7 +57,7 @@
 
 
                     $currentBooking = $table->bookings->first();
-                    $category = $currentBooking && $currentBooking->customer ? strtolower($currentBooking->customer->category) : null;
+                    $category = $currentBooking && $currentBooking->customer ? strtolower($currentBooking->category) : null;
                     if (!$currentBooking && $status === 'hold' && $table->holdByCustomer) {
                         $category = strtolower($table->holdByCustomer->category);
                     }
@@ -54,7 +68,7 @@
                             'pax' => $currentBooking->pax,
                             'customer' => [
                                 'name' => $currentBooking->customer->name ?? 'Unknown',
-                                'category' => $currentBooking->customer->category ?? 'REGULAR',
+                                'category' => $currentBooking->category ?? 'REGULAR',
                                 'phone' => $currentBooking->customer->phone ?? 'N/A'
                             ]
                         ];
@@ -70,7 +84,7 @@
                         notes: '{{ addslashes($currentBooking->notes) }}',
                         customer: { 
                             name: '{{ addslashes($currentBooking->customer->name ?? 'Unknown') }}', 
-                            category: '{{ $currentBooking->customer->category ?? 'REGULAR' }}', 
+                            category: '{{ $currentBooking->category ?? 'REGULAR' }}', 
                             phone: '{{ $currentBooking->customer->phone ?? 'N/A' }}',
                             age: '{{ $currentBooking->customer->age }}',
                             gender: '{{ $currentBooking->customer->gender }}'
@@ -330,132 +344,147 @@
     <div class="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50/50 overflow-hidden">
         <div class="p-10">
             <form action="{{ route('dashboard') }}" method="GET" id="bookingFilterForm"
-                class="flex flex-col xl:flex-row justify-between items-center mb-10 gap-6 w-full">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Booking List</h2>
-
-                <div class="flex flex-1 max-w-xl relative group">
-                    <i data-lucide="search"
-                        class="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors"></i>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Search room, Guest Name..." onchange="this.form.submit()"
-                        class="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-[1.25rem] text-sm font-medium focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300">
+                class="flex flex-col gap-8 mb-10">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Booking List</h2>
+                    
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <button type="button" @click="showBookingModal = true"
+                            class="flex-1 md:flex-none px-6 py-3 bg-white text-slate-800 border border-slate-200 rounded-2xl text-xs font-black flex items-center justify-center gap-2.5 shadow-sm hover:bg-slate-50 transition-all">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-[#e85a2f]"></i> Add Guest
+                        </button>
+                        <button type="button" @click="showEventModal = true"
+                            class="flex-1 md:flex-none px-6 py-3 bg-[#e85a2f] text-white rounded-2xl text-xs font-black flex items-center justify-center gap-2.5 shadow-lg shadow-orange-500/20 hover:bg-[#d04a25] transition-all">
+                            <i data-lucide="megaphone" class="w-4 h-4"></i> Add Event
+                        </button>
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                    <input type="hidden" name="status" value="{{ request('status') }}" id="statusInput">
-                    <div class="relative inline-block text-left" x-data="{ open: false }">
-                        <button type="button" @click="open = !open"
-                            class="px-5 py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold flex items-center gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-400"></i> {{ request('status')
-                            ? ucfirst(request('status')) : 'Filter Status' }}
-                        </button>
-                        <div x-show="open" @click.away="open = false"
-                            class="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
-                            <div class="p-2 space-y-1">
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('statusInput').value = ''; document.getElementById('bookingFilterForm').submit()">All
-                                    Status</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-emerald-600 font-bold hover:bg-emerald-50 rounded-lg"
-                                    onclick="document.getElementById('statusInput').value = 'confirmed'; document.getElementById('bookingFilterForm').submit()">Confirmed</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-amber-600 font-bold hover:bg-amber-50 rounded-lg"
-                                    onclick="document.getElementById('statusInput').value = 'pending'; document.getElementById('bookingFilterForm').submit()">Pending</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-rose-600 font-bold hover:bg-rose-50 rounded-lg"
-                                    onclick="document.getElementById('statusInput').value = 'cancelled'; document.getElementById('bookingFilterForm').submit()">Cancelled</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-blue-600 font-bold hover:bg-blue-50 rounded-lg"
-                                    onclick="document.getElementById('statusInput').value = 'occupied'; document.getElementById('bookingFilterForm').submit()">Occupied</a>
-                            </div>
-                        </div>
+                <div class="flex flex-col xl:flex-row gap-4">
+                    <div class="flex-1 relative group min-w-[300px]">
+                        <i data-lucide="search"
+                            class="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors"></i>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="Search by name, phone, or table..." onchange="this.form.submit()"
+                            class="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus-ring-blue-500/5 transition-all outline-none">
                     </div>
 
-                    <input type="hidden" name="category" value="{{ request('category') }}" id="categoryInput">
-                    <div class="relative inline-block text-left" x-data="{ open: false }">
-                        <button type="button" @click="open = !open"
-                            class="px-5 py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold flex items-center gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                            <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i> {{ request('category') ?:
-                            'Category' }}
-                        </button>
-                        <div x-show="open" @click.away="open = false"
-                            class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden max-h-[300px] overflow-y-auto">
-                            <div class="p-2 space-y-1">
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('categoryInput').value = ''; document.getElementById('bookingFilterForm').submit()">All
-                                    Categories</a>
-                                @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER',
-                                'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('categoryInput').value = '{{ $cat }}'; document.getElementById('bookingFilterForm').submit()">{{
-                                    $cat }}</a>
-                                @endforeach
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <input type="hidden" name="period" value="{{ request('period', 'this_week') }}" id="periodInput">
+                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
+                            <button type="button" @click="open = !open"
+                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="calendar-days" class="w-4 h-4 text-slate-400"></i>
+                                    <span>
+                                        @php
+                                            $periodLabel = 'This Week';
+                                            $p = request('period');
+                                            if($p == 'last_hour') $periodLabel = 'Last Hour';
+                                            elseif($p == 'last_30_mins') $periodLabel = 'Last 30 Min';
+                                            elseif($p == 'last_15_mins') $periodLabel = 'Last 15 Min';
+                                            elseif($p == 'next_hour') $periodLabel = 'Next Hour';
+                                            elseif($p == 'next_30_mins') $periodLabel = 'Next 30 Min';
+                                            elseif($p == 'next_15_mins') $periodLabel = 'Next 15 Min';
+                                            elseif($p == 'today') $periodLabel = 'Today';
+                                            elseif($p == 'this_month') $periodLabel = 'This Month';
+                                            elseif($p == 'this_year') $periodLabel = 'This Year';
+                                            elseif($p == 'all') $periodLabel = 'All Time';
+                                        @endphp
+                                        {{ $periodLabel }}
+                                    </span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" 
+                                class="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden max-h-80 overflow-y-auto"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-y-2">
+                                <div class="p-2 space-y-1">
+                                    @foreach([
+                                        'last_15_mins' => 'Last 15 Min',
+                                        'last_30_mins' => 'Last 30 Min',
+                                        'last_hour' => 'Last Hour',
+                                        'next_15_mins' => 'Next 15 Min',
+                                        'next_30_mins' => 'Next 30 Min',
+                                        'next_hour' => 'Next Hour',
+                                        'today' => 'Today',
+                                        'this_week' => 'This Week',
+                                        'this_month' => 'This Month',
+                                        'this_year' => 'This Year',
+                                        'all' => 'All Time'
+                                    ] as $val => $label)
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('period', 'this_week') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                        onclick="document.getElementById('periodInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()">{{ $label }}</a>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <input type="hidden" name="period" value="{{ request('period', 'this_week') }}" id="periodInput">
-                    <div class="relative inline-block text-left" x-data="{ open: false }">
-                        <button type="button" @click="open = !open"
-                            class="px-5 py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold flex items-center gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors text-nowrap">
-                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i> 
-                            @php
-                                $periodLabel = 'This Week';
-                                if(request('period') == 'today') $periodLabel = 'Today';
-                                elseif(request('period') == 'this_month') $periodLabel = 'This Month';
-                                elseif(request('period') == 'this_year') $periodLabel = 'This Year';
-                                elseif(request('period') == 'all') $periodLabel = 'All Time';
-                            @endphp
-                            {{ $periodLabel }}
-                        </button>
-                        <div x-show="open" @click.away="open = false"
-                            class="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
-                            <div class="p-2 space-y-1">
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('periodInput').value = 'today'; document.getElementById('bookingFilterForm').submit()">Today</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('periodInput').value = 'this_week'; document.getElementById('bookingFilterForm').submit()">This
-                                    Week</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('periodInput').value = 'this_month'; document.getElementById('bookingFilterForm').submit()">This
-                                    Month</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('periodInput').value = 'this_year'; document.getElementById('bookingFilterForm').submit()">This
-                                    Year</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-slate-600 font-bold hover:bg-slate-50 rounded-lg"
-                                    onclick="document.getElementById('periodInput').value = 'all'; document.getElementById('bookingFilterForm').submit()">All
-                                    Time</a>
+                        <input type="hidden" name="status" value="{{ request('status') }}" id="statusInput">
+                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
+                            <button type="button" @click="open = !open"
+                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-400"></i>
+                                    <span>{{ request('status') ? ucfirst(request('status')) : 'All Status' }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" 
+                                class="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-y-2">
+                                <div class="p-2 space-y-1">
+                                    @foreach(['' => 'All Status', 'confirmed' => 'Confirmed', 'pending' => 'Pending', 'cancelled' => 'Cancelled', 'occupied' => 'Occupied'] as $val => $label)
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('status') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                        onclick="document.getElementById('statusInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()">{{ $label }}</a>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <input type="hidden" name="sort" value="{{ request('sort', 'desc') }}" id="sortInput">
-                    <button type="button"
-                        onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
-                        class="px-5 py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold flex items-center gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                        <i data-lucide="arrow-up-down" class="w-4 h-4 text-slate-400"></i> Sort ({{ request('sort') ==
-                        'asc' ? 'Oldest' : 'Newest' }})
-                    </button>
-                    <button type="button" onclick="exportToExcel()"
-                        class="px-5 py-3 bg-emerald-50 text-emerald-700 rounded-2xl text-sm font-bold flex items-center gap-2 border border-emerald-100/50 hover:bg-emerald-100 transition-colors">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export
-                    </button>
-                    <button type="button" @click="showBookingModal = true"
-                        class="px-8 py-3 bg-white text-slate-800 border border-slate-200 rounded-2xl text-sm font-black flex items-center gap-2.5 shadow-sm hover:bg-slate-50 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                        <i data-lucide="plus-circle" class="w-5 h-5 text-[#e85a2f]"></i> Add Booking
-                    </button>
-                    <button type="button" @click="showEventModal = true"
-                        class="px-8 py-3 bg-[#e85a2f] text-white rounded-2xl text-sm font-black flex items-center gap-2.5 shadow-[0_8px_20px_rgba(232,90,47,0.3)] hover:bg-[#d04a25] transition-all hover:-translate-y-0.5 active:translate-y-0">
-                        <i data-lucide="megaphone" class="w-5 h-5"></i> Add Event Booking
-                    </button>
+                        <input type="hidden" name="category" value="{{ request('category') }}" id="categoryInput">
+                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
+                            <button type="button" @click="open = !open"
+                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i>
+                                    <span>{{ request('category') ?: 'Category' }}</span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" 
+                                class="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden max-h-80 overflow-y-auto"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-y-2">
+                                <div class="p-2 space-y-1">
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50"
+                                        onclick="document.getElementById('categoryInput').value = ''; document.getElementById('bookingFilterForm').submit()">All Categories</a>
+                                    @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
+                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('category') == $cat ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                        onclick="document.getElementById('categoryInput').value = '{{ $cat }}'; document.getElementById('bookingFilterForm').submit()">{{ $cat }}</a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="exportToExcel()"
+                            class="flex-1 sm:flex-none px-6 py-3.5 bg-emerald-50 text-emerald-700 rounded-2xl text-[13px] font-bold flex items-center justify-center gap-2 border border-emerald-100/50 hover:bg-emerald-100 transition-colors">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                            <span>Export</span>
+                        </button>
+
+                        <div class="h-8 w-px bg-slate-100 mx-1 hidden md:block"></div>
+
+                        <input type="hidden" name="sort" value="{{ request('sort', 'desc') }}" id="sortInput">
+                        <button type="button"
+                            onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
+                            class="flex-1 sm:flex-none px-5 py-3.5 bg-slate-50 text-slate-800 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 border border-slate-200/50 hover:bg-slate-200 transition-all">
+                            <i data-lucide="arrow-up-down" class="w-4 h-4 text-slate-500"></i>
+                            <span>{{ request('sort') == 'asc' ? 'Oldest' : 'Newest' }}</span>
+                        </button>
+                    </div>
                 </div>
             </form>
 
@@ -464,9 +493,7 @@
                     <thead>
                         <tr
                             class="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] border-b border-slate-50">
-                            <th class="pb-5 px-4 w-10"><input type="checkbox"
-                                    class="rounded-md border-slate-200 text-blue-500 focus:ring-blue-500 ring-offset-0">
-                            </th>
+                            <th class="pb-5 px-4 w-12 text-left text-slate-400 font-black uppercase tracking-widest">#</th>
                             <th class="pb-5 px-4 text-left">Guest Name</th>
                             <th class="pb-5 px-4 text-left text-nowrap">Category</th>
                             <th class="pb-5 px-4 text-left text-nowrap">Table Number</th>
@@ -486,29 +513,32 @@
                                 'pax' => $booking->pax,
                                 'customer' => [
                                     'name' => $booking->customer->name ?? 'Unknown',
-                                    'category' => $booking->customer->category ?? 'REGULAR',
+                                    'category' => $booking->category ?? 'REGULAR',
                                     'phone' => $booking->customer->phone ?? 'N/A'
                                 ]
                             ];
                         @endphp
                         <tr class="group hover:bg-slate-50/50 transition-colors cursor-pointer"
-                            @click="selectedBooking = { 
+                             @click="selectedBooking = { 
                                 id: '{{ $booking->id }}',
                                 status: '{{ $booking->status }}', 
                                 pax: '{{ $booking->pax }}', 
                                 start_time: '{{ $booking->start_time->format('Y-m-d\TH:i') }}',
                                 end_time: '{{ $booking->end_time->format('Y-m-d\TH:i') }}',
                                 notes: '{{ addslashes($booking->notes) }}',
+                                tags: {{ $booking->tags->toJson() }},
                                 customer: { 
                                     name: '{{ addslashes($booking->customer->name ?? 'Unknown') }}', 
-                                    category: '{{ $booking->customer->category ?? 'REGULAR' }}', 
+                                    category: '{{ $booking->category ?? 'REGULAR' }}', 
                                     phone: '{{ $booking->customer->phone ?? 'N/A' }}',
                                     age: '{{ $booking->customer->age }}',
                                     gender: '{{ $booking->customer->gender }}'
                                 } 
                             }; showInfoModal = true">
-                            <td class="py-6 px-4"><input type="checkbox"
-                                    class="rounded-md border-slate-200 text-blue-500 focus:ring-blue-500 ring-offset-0">
+                            <td class="py-6 px-4">
+                                <span class="text-xs font-black text-slate-300 group-hover:text-blue-500 transition-colors">
+                                    {{ $loop->iteration + ($recentBookings->firstItem() - 1) }}
+                                </span>
                             </td>
                             <td class="py-6 px-4">
                                 <span class="font-black text-slate-800 text-sm tracking-tight">{{
@@ -516,7 +546,7 @@
                             </td>
                             <td class="py-6 px-4">
                                 @php
-                                $cat = strtoupper($booking->customer->category ?? 'REGULER');
+                                $cat = strtoupper($booking->category ?? 'REGULER');
                                 $catData = $categoryMap[$cat] ?? null;
                                 $catColor = $catData ? $catData->bg_color . ' ' . $catData->text_color : 'bg-slate-50 text-slate-400';
                                 $catIcon  = $catData?->icon ?? 'tag';
@@ -580,26 +610,44 @@
                 </table>
 
                 {{-- Totals Summary Row --}}
-                <div class="mx-4 mb-2 mt-1 px-6 py-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-wrap items-center gap-6">
-                    <div class="flex items-center gap-2 text-xs text-slate-400 font-black uppercase tracking-widest">
-                        <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
-                        <span>Total Unique Bookings:</span>
-                        <span class="text-slate-700 text-sm">{{ $listTotals['count'] }}</span>
+                <div class="mx-4 mb-2 mt-1 p-2 sm:p-4 md:p-6 bg-slate-50/50 rounded-3xl border border-slate-100/50 backdrop-blur-sm">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-center">
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                                <i data-lucide="hash" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total Bookings</p>
+                                <p class="text-base font-black text-slate-800 tracking-tight">{{ number_format($listTotals['count']) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-400">
+                                <i data-lucide="user-check" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total PAX</p>
+                                <p class="text-base font-black text-indigo-600 tracking-tight">{{ number_format($listTotals['guests']) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-400">
+                                <i data-lucide="banknote" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total Amount</p>
+                                <p class="text-base font-black text-emerald-600 tracking-tight">Rp {{ number_format($listTotals['amount'], 0, ',', '.') }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="h-4 w-px bg-slate-200"></div>
-                    <div class="flex items-center gap-2 text-xs text-slate-400 font-black uppercase tracking-widest">
-                        <i data-lucide="user-check" class="w-4 h-4 text-indigo-400"></i>
-                        <span>Total PAX:</span>
-                        <span class="text-indigo-600 text-sm font-black">{{ number_format($listTotals['guests']) }}</span>
-                    </div>
-                    <div class="h-4 w-px bg-slate-200"></div>
-                    <div class="flex items-center gap-2 text-xs text-slate-400 font-black uppercase tracking-widest">
-                        <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Total Amount:</span>
-                        <span class="text-emerald-600 text-sm font-black">Rp {{ number_format($listTotals['amount'], 0, ',', '.') }}</span>
-                    </div>
-                    <div class="ml-auto text-[10px] text-slate-300 font-bold uppercase tracking-wider">
-                        * Event dengan nama &amp; waktu yang sama dihitung 1x
+                    <div class="mt-4 px-4 flex justify-between items-center sm:hidden xl:flex">
+                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 px-3 py-1 bg-white/50 rounded-lg">
+                            <i data-lucide="info" class="w-3 h-3 text-slate-300"></i>
+                            * Event dengan nama & waktu yang sama dihitung 1x
+                        </span>
+                        <span class="text-[9px] text-indigo-400/50 font-black px-3 py-1 border border-indigo-100/50 rounded-lg bg-indigo-50/20">SUMMARY VIEW</span>
                     </div>
                 </div>
 
@@ -634,6 +682,9 @@
                         searchResults: [], 
                         selectedCustomer: null,
                         allCustomers: [],
+                        allTables: {{ Js::from($allTables) }},
+                        selectedTableId: '',
+                        get selectedTable() { return this.allTables.find(t => t.id == this.selectedTableId) },
                         
                         filterCustomers() {
                             if (this.customerSearch.length < 2) {
@@ -652,10 +703,11 @@
                             this.customerSearch = c.name;
                             this.searchResults = [];
                             // Sync other fields
-                            if ($refs.phoneInput) $refs.phoneInput.value = c.phone || '';
-                            if ($refs.ageInput) $refs.ageInput.value = c.age || '';
-                            if ($refs.categorySelect && c.category) {
-                                $refs.categorySelect.value = c.category.toUpperCase();
+                            if (this.$refs.phoneInput) this.$refs.phoneInput.value = c.phone || '';
+                            if (this.$refs.ageInput) this.$refs.ageInput.value = c.age || '';
+                            if (this.$refs.genderSelect) this.$refs.genderSelect.value = c.gender || '';
+                            if (this.$refs.categorySelect && c.category) {
+                                this.$refs.categorySelect.value = c.category.toUpperCase();
                             }
                         },
 
@@ -767,7 +819,7 @@
                                     <div class="mt-6">
                                         <label
                                             class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Table</label>
-                                        <select name="table_id" required
+                                        <select name="table_id" required x-model="selectedTableId"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
                                             <option value="">Select Table</option>
                                             @foreach($allTables as $table)
@@ -776,6 +828,20 @@
                                             </template>
                                             @endforeach
                                         </select>
+
+                                        <!-- Table Details (Min Spend & Capacity) -->
+                                        <template x-if="selectedTable">
+                                            <div class="mt-4 flex gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div class="flex-1 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                                                    <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Min. Spending</p>
+                                                    <p class="text-sm font-black text-indigo-600" x-text="'Rp ' + (selectedTable.min_spending || 0).toLocaleString('id-ID')"></p>
+                                                </div>
+                                                <div class="flex-1 p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                                    <p class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">Max Capacity</p>
+                                                    <p class="text-sm font-black text-amber-600" x-text="(selectedTable.capacity || 0) + ' PAX'"></p>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
 
@@ -816,11 +882,21 @@
                                         <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
-                                    <div>
-                                        <label
-                                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                        <input type="number" name="age" placeholder="Age" x-ref="ageInput"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
+                                            <input type="number" name="age" placeholder="Age" x-ref="ageInput"
+                                                class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
+                                            <select name="gender" x-ref="genderSelect"
+                                                class="w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
+                                                <option value="">N/A</option>
+                                                <option value="MALE">MALE</option>
+                                                <option value="FEMALE">FEMALE</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -841,6 +917,23 @@
                                     <input type="datetime-local" name="end_time" required
                                         class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                 </div>
+
+                                <!-- Tags Section -->
+                                @foreach($tags as $group => $groupTags)
+                                <div class="md:col-span-2 border-t border-slate-100 pt-6 mt-4">
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Select {{ $group }}</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($groupTags as $tag)
+                                            <label class="cursor-pointer group">
+                                                <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" class="hidden peer">
+                                                <div class="px-4 py-2 rounded-2xl border border-slate-100 bg-slate-50 text-[11px] font-black text-slate-500 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 transition-all shadow-sm group-hover:bg-slate-100">
+                                                    {{ $tag->name }}
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endforeach
 
                                 <!-- Notes -->
                                 <div class="md:col-span-2">
@@ -1057,11 +1150,21 @@
                                         <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
                                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                     </div>
-                                    <div>
-                                        <label
-                                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                        <input type="number" name="age" placeholder="Age" x-ref="ageInput"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
+                                            <input type="number" name="age" placeholder="Age" x-ref="ageInput"
+                                                class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
+                                            <select name="gender" x-ref="genderSelect"
+                                                class="w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
+                                                <option value="">N/A</option>
+                                                <option value="MALE">MALE</option>
+                                                <option value="FEMALE">FEMALE</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1082,6 +1185,23 @@
                                     <input type="datetime-local" name="end_time" required
                                         class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                 </div>
+
+                                <!-- Tags Section -->
+                                @foreach($tags as $group => $groupTags)
+                                <div class="md:col-span-2 border-t border-slate-100 pt-6 mt-4">
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Event {{ $group }}</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($groupTags as $tag)
+                                            <label class="cursor-pointer group">
+                                                <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" class="hidden peer">
+                                                <div class="px-4 py-2 rounded-2xl border border-slate-100 bg-slate-50 text-[11px] font-black text-slate-500 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all shadow-sm group-hover:bg-slate-100">
+                                                    {{ $tag->name }}
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endforeach
 
                                 <!-- Notes -->
                                 <div class="md:col-span-2">
@@ -1150,40 +1270,85 @@
                             <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Loading details...</p>
                         </div>
                         <template x-if="selectedBooking">
-                            <div class="space-y-6 animate-in fade-in zoom-in duration-300">
-                                <div class="p-6 bg-slate-50 rounded-3xl space-y-4 shadow-sm border border-slate-100/50">
-                                    <div class="flex justify-between items-start pt-2">
-                                        <div>
-                                            <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Guest Name</label>
-                                            <div class="flex items-center gap-3">
-                                                <p class="text-xl font-black text-slate-800 tracking-tight" x-text="selectedBooking.customer?.name || 'Unknown'"></p>
-                                                <div class="px-2.5 py-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider" x-text="selectedBooking.customer?.category || 'REGULAR'"></div>
-                                            </div>
-                                        </div>
-                                        <div class="px-3.5 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200" x-text="selectedBooking.status"></div>
+                            <div class="bg-white p-10">
+                                <div class="flex justify-between items-center mb-10">
+                                    <div>
+                                        <h3 class="text-2xl font-black text-slate-800 tracking-tight" x-text="'Table ' + selectedBooking.table_model?.code"></h3>
+                                        <p class="text-sm text-slate-400 font-medium mt-1">Reservation Details</p>
                                     </div>
-
-                                    <div class="grid grid-cols-2 gap-6 pt-4 border-t border-slate-200/50">
-                                        <div>
-                                            <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Phone Number</label>
-                                            <p class="text-base font-black text-slate-700" x-text="selectedBooking.customer?.phone || 'N/A'"></p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Total Guests</label>
-                                            <p class="text-base font-black text-slate-700" x-text="selectedBooking.pax + ' PAX'"></p>
-                                        </div>
-                                    </div>
+                                    <button @click="showInfoModal = false; selectedBooking = null"
+                                        class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
+                                        <i data-lucide="x" class="w-6 h-6"></i>
+                                    </button>
                                 </div>
 
-                                 <div class="flex gap-4 pt-4">
-                                    <button x-show="selectedBooking.status !== 'hold'" @click="showInfoModal = false; showEditBookingModal = true; editBookingData = JSON.parse(JSON.stringify(selectedBooking))"
-                                            class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-base font-black hover:bg-blue-700 transition-all active:scale-95 leading-none shadow-lg shadow-blue-200">
-                                        Edit Booking
-                                    </button>
-                                    <button @click="showInfoModal = false; selectedBooking = null"
-                                            class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-base font-black hover:bg-slate-200 transition-all active:scale-95 leading-none">
-                                        Close
-                                    </button>
+                                <div class="space-y-8">
+                                    <div class="flex items-center gap-6">
+                                        <div class="w-16 h-16 rounded-[1.5rem] bg-indigo-50 border-4 border-white shadow-xl shadow-indigo-100 flex items-center justify-center text-indigo-600 font-black text-2xl"
+                                            :class="{
+                                                'bg-amber-50 text-amber-500 shadow-amber-100': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'gold',
+                                                'bg-slate-100 text-slate-500 shadow-slate-200': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'silver',
+                                                'bg-orange-50 text-orange-600 shadow-orange-100': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'bronze'
+                                            }">
+                                            <span x-text="selectedBooking.customer?.name?.substring(0,1).toUpperCase() || '?'"></span>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-3">
+                                                <h4 class="text-xl font-black text-slate-800" x-text="selectedBooking.customer?.name"></h4>
+                                                <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                                                    :class="{
+                                                        'bg-amber-100 text-amber-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'gold',
+                                                        'bg-slate-100 text-slate-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'silver',
+                                                        'bg-orange-100 text-orange-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'bronze'
+                                                    }"
+                                                    x-text="selectedBooking.customer?.master_level?.name || 'REGULER'"></span>
+                                            </div>
+                                            <p class="text-sm font-bold text-slate-400 mt-1" x-text="selectedBooking.customer?.phone || 'No phone number'"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
+                                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check In</label>
+                                            <p class="text-sm font-black text-slate-700" x-text="selectedBooking.start_time ? new Date(selectedBooking.start_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                        </div>
+                                        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
+                                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check Out</label>
+                                            <p class="text-sm font-black text-slate-700" x-text="selectedBooking.end_time ? new Date(selectedBooking.end_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-6 bg-slate-50 rounded-[2rem] border border-slate-100/50">
+                                        <div class="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Status</label>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-2.5 h-2.5 rounded-full" :class="{
+                                                        'bg-amber-400': selectedBooking.status === 'confirmed',
+                                                        'bg-blue-400': selectedBooking.status === 'pending',
+                                                        'bg-emerald-400': ['occupied', 'arrived'].includes(selectedBooking.status),
+                                                        'bg-slate-400': selectedBooking.status === 'cancelled'
+                                                    }"></div>
+                                                    <span class="text-sm font-black text-slate-700 uppercase" x-text="selectedBooking.status"></span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Total Guests</label>
+                                                <p class="text-base font-black text-slate-700" x-text="selectedBooking.pax + ' PAX'"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                     <div class="flex gap-4 pt-4">
+                                        <button x-show="selectedBooking.status !== 'hold'" @click="showInfoModal = false; showEditBookingModal = true; editBookingData = JSON.parse(JSON.stringify(selectedBooking))"
+                                                class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-base font-black hover:bg-blue-700 transition-all active:scale-95 leading-none shadow-lg shadow-blue-200">
+                                            Edit Booking
+                                        </button>
+                                        <button @click="showInfoModal = false; selectedBooking = null"
+                                                class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-base font-black hover:bg-slate-200 transition-all active:scale-95 leading-none">
+                                            Close
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -1200,92 +1365,113 @@
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
 
-                <div x-show="showEditBookingModal" class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <form :action="'/bookings/' + editBookingData.id" method="POST" class="p-10">
-                        @csrf
-                        @method('PUT')
-                        <div class="flex justify-between items-center mb-10">
-                            <div>
-                                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Edit Booking</h3>
-                                <p class="text-sm text-slate-400 font-medium mt-1">Update reservation details</p>
-                            </div>
-                            <button type="button" @click="showEditBookingModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                <i data-lucide="x" class="w-6 h-6"></i>
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Guest Name</label>
-                                <input type="text" name="customer_name" x-model="editBookingData.customer.name" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
-                                <select name="customer_category" x-model="editBookingData.customer.category" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                                    @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                        <option value="{{ $cat }}">{{ $cat }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Status</label>
-                                <select name="status" x-model="editBookingData.status" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                                    @foreach(['PENDING', 'CONFIRMED', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
-                                        <option value="{{ $st }}">{{ $st }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact Number</label>
-                                <input type="text" name="phone" x-model="editBookingData.customer.phone" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
+                <template x-if="showEditBookingModal">
+                    <div class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                        <form :action="'/bookings/' + editBookingData.id" method="POST" class="p-10">
+                            @csrf
+                            @method('PUT')
+                            <div class="flex justify-between items-center mb-10">
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                    <input type="number" name="age" x-model="editBookingData.customer.age" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    <h3 class="text-2xl font-black text-slate-800 tracking-tight">Edit Booking</h3>
+                                    <p class="text-sm text-slate-400 font-medium mt-1">Update reservation details</p>
                                 </div>
+                                <button type="button" @click="showEditBookingModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
+                                    <i data-lucide="x" class="w-6 h-6"></i>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Guest Name</label>
+                                    <input type="text" name="customer_name" x-model="editBookingData.customer.name" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                </div>
+
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
-                                    <select name="gender" x-model="editBookingData.customer.gender" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                                        <option value="">Not Set</option>
-                                        <option value="MALE">Laki-laki</option>
-                                        <option value="FEMALE">Perempuan</option>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
+                                    <select name="customer_category" x-model="editBookingData.customer.category" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                        @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
+                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
+
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Status</label>
+                                    <select name="status" x-model="editBookingData.status" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                        @foreach(['PENDING', 'CONFIRMED', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
+                                            <option value="{{ $st }}">{{ $st }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact Number</label>
+                                    <input type="text" name="phone" x-model="editBookingData.customer.phone" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
+                                        <input type="number" name="age" x-model="editBookingData.customer.age" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
+                                        <select name="gender" x-model="editBookingData.customer.gender" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                            <option value="">Not Set</option>
+                                            <option value="MALE">Laki-laki</option>
+                                            <option value="FEMALE">Perempuan</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check In</label>
+                                    <input type="datetime-local" name="start_time" x-model="editBookingData.start_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check Out</label>
+                                    <input type="datetime-local" name="end_time" x-model="editBookingData.end_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">PAX</label>
+                                    <input type="number" name="pax" x-model="editBookingData.pax" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                </div>
+
+                                <!-- Tags Section -->
+                                @foreach($tags as $group => $groupTags)
+                                <div class="md:col-span-2 border-t border-slate-100 pt-6">
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Edit {{ $group }}</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($groupTags as $tag)
+                                            <label class="cursor-pointer group">
+                                                <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" 
+                                                       :checked="(editBookingData.tags || []).some(t => t.id == {{ $tag->id }})"
+                                                       class="hidden peer">
+                                                <div class="px-4 py-2 rounded-2xl border border-slate-100 bg-slate-50 text-[11px] font-black text-slate-500 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 transition-all shadow-sm group-hover:bg-slate-100">
+                                                    {{ $tag->name }}
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endforeach
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Notes</label>
+                                    <textarea name="notes" x-model="editBookingData.notes" rows="2" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold resize-none"></textarea>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check In</label>
-                                <input type="datetime-local" name="start_time" x-model="editBookingData.start_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                            <div class="pt-8">
+                                <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-2xl text-base font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+                                    Save Changes
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check Out</label>
-                                <input type="datetime-local" name="end_time" x-model="editBookingData.end_time" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">PAX</label>
-                                <input type="number" name="pax" x-model="editBookingData.pax" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Notes</label>
-                                <textarea name="notes" x-model="editBookingData.notes" rows="2" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold resize-none"></textarea>
-                            </div>
-                        </div>
-
-                        <div class="pt-8">
-                            <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-2xl text-base font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                        </form>
+                    </div>
+                </template>
             </div>
         </div>
 <!-- Hidden table for Export -->
@@ -1307,7 +1493,7 @@
         @foreach($allFilteredBookings as $booking)
         <tr>
             <td>{{ $booking->customer->name ?? 'N/A' }}</td>
-            <td>{{ $booking->customer->category ?? 'REGULAR' }}</td>
+            <td>{{ $booking->category ?? 'REGULAR' }}</td>
             <td>{{ $booking->tableModel->code ?? 'N/A' }}</td>
             <td>{{ $booking->pax }}</td>
             <td>{{ $booking->start_time ? $booking->start_time->format('d M, Y H:i') : '-' }}</td>

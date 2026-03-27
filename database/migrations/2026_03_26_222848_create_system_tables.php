@@ -14,9 +14,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone')->nullable();
 
-            // Kategori sebagai string (sync dengan enum FastAPI)
-            $table->string('category', 50)->default('reguler');
-
             $table->unsignedSmallInteger('age')->nullable();
             $table->string('gender', 10)->nullable();
 
@@ -28,7 +25,7 @@ return new class extends Migration
                   ->onDelete('restrict');             // ← FIXED: restrict, bukan cascade
 
             // Tracking kunjungan terakhir
-            $table->string('last_status', 20)->nullable();
+            $table->unsignedInteger('total_visits')->default(0);
             $table->timestamp('last_visit')->nullable();
 
             $table->timestamps();
@@ -80,6 +77,7 @@ return new class extends Migration
 
             // Status sebagai string (sync dengan enum FastAPI)
             $table->string('status', 20)->default('pending');
+            $table->string('category', 50)->default('reguler');
 
             $table->text('notes')->nullable();
             $table->text('cancel_reason')->nullable();

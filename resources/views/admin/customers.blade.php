@@ -61,15 +61,28 @@
     <!-- Booking List Card -->
     <div class="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50/50 overflow-hidden">
         <div class="p-10">
-            <div class="flex flex-col xl:flex-row justify-between items-center mb-10 gap-6 w-full">
                 <div class="flex items-center gap-4">
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">Active Relationships</h2>
-                    <button onclick="exportToExcel()" 
+                    
+                    <!-- Export Button -->
+                    <a href="{{ route('customers.export') }}" 
                        class="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-emerald-100 shadow-sm hover:-translate-y-0.5">
                         <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Export XLSX
-                    </button>
+                    </a>
+
+                    <!-- Import Button -->
+                    <label class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-blue-100 shadow-sm hover:-translate-y-0.5 cursor-pointer">
+                        <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                        <span>Import XLSX</span>
+                        <input type="file" id="importFile" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleImport(event)">
+                    </label>
+
+                    <!-- Loading Indicator for Import -->
+                    <div id="importLoading" class="hidden flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+                        <div class="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Processing...</span>
+                    </div>
                 </div>
-            </div>
 
             <div class="overflow-x-auto overflow-y-visible">
                 <table class="w-full text-left border-separate border-spacing-y-4 -mt-4">
@@ -162,7 +175,7 @@
                             <!-- Total Visits -->
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors text-center">
                                 <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-lg border border-slate-100 shadow-sm">
-                                    <span class="text-sm font-black text-slate-700 leading-none">{{ $c->visits_count ?? 0 }}</span>
+                                    <span class="text-sm font-black text-slate-700 leading-none">{{ $c->total_combined_visits ?? 0 }}</span>
                                     <i data-lucide="award" class="w-3.5 h-3.5 text-blue-500"></i>
                                 </div>
                             </td>
@@ -170,7 +183,7 @@
                             <td class="py-6 px-4 bg-slate-50/50 group-hover:bg-white border-y border-slate-50 transition-colors text-right">
                                 <div class="flex flex-col items-end">
                                     <span class="text-sm font-black text-emerald-600 tracking-tighter">
-                                        Rp {{ number_format($c->total_spent ?? 0, 0, ',', '.') }}
+                                        Rp {{ number_format(($c->total_spending ?? 0) + ($c->total_spent ?? 0), 0, ',', '.') }}
                                     </span>
                                     <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Aggregate</span>
                                 </div>
@@ -424,20 +437,52 @@
     @section('scripts')
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script>
-        function exportToExcel() {
-            try {
-                const table = document.getElementById('all-customers-export');
-                const wb = XLSX.utils.table_to_book(table, { sheet: "Verified Guests" });
-                
-                // Get current date for filename
-                const date = new Date().toISOString().split('T')[0];
-                const filename = `DreamVille_Guests_${date}.xlsx`;
-                
-                XLSX.writeFile(wb, filename);
-            } catch (error) {
-                console.error('Export failed:', error);
-                alert('Failed to export XLSX. Please try again.');
-            }
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const loading = document.getElementById('importLoading');
+            loading.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.SheetNames[0];
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+
+                    // Send to server
+                    fetch("{{ route('customers.import') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ data: jsonData })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        loading.classList.add('hidden');
+                        if (res.status === 'success') {
+                            alert('Import Berhasil!');
+                            window.location.reload();
+                        } else {
+                            alert('Gagal Import: ' + res.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loading.classList.add('hidden');
+                        alert('Terjadi kesalahan saat menghubungi server.');
+                    });
+                } catch (error) {
+                    console.error('Parsing failed:', error);
+                    loading.classList.add('hidden');
+                    alert('Gagal membaca file Excel. Pastikan format benar.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
     </script>
     @endsection

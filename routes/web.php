@@ -31,7 +31,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/floor/tables', [FloorController::class, 'storeTable'])->name('floor.table.store');
     Route::put('/floor/tables/{id}', [FloorController::class, 'updateTable'])->name('floor.table.update');
     Route::delete('/floor/tables/{id}', [FloorController::class, 'destroyTable'])->name('floor.table.destroy');
+    Route::patch('/floor/tables/bulk/min-spending', [FloorController::class, 'bulkUpdateMinSpending'])->name('floor.table.bulk_min_spending');
     Route::patch('/floor/tables/{id}/min-spending', [FloorController::class, 'updateMinSpending'])->name('floor.table.min_spending');
+
 
     // Legacy floor-plan route (redirect ke baru) untuk tidak break link lama
     Route::get('/floor-plan', fn() => redirect()->route('floor.index'))->name('floor_plan');
@@ -41,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers');
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
     Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
+    Route::post('/customers/import', [CustomerController::class, 'import'])->name('customers.import');
 
     // ── Demographics ──────────────────────────────────────────────────────
     Route::get('/demographics', [\App\Http\Controllers\DemographicController::class, 'index'])->name('demographics');
