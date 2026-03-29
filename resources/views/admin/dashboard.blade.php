@@ -362,8 +362,8 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col xl:flex-row gap-4">
-                    <div class="flex-1 relative group min-w-[300px]">
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <div class="flex-1 relative group min-w-[300px] max-w-md">
                         <i data-lucide="search"
                             class="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors"></i>
                         <input type="text" name="search" value="{{ request('search') }}"
@@ -373,37 +373,23 @@
 
                     <div class="flex flex-wrap items-center gap-2.5">
                         <input type="hidden" name="period" value="{{ request('period', 'this_week') }}" id="periodInput">
-                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
+                        <input type="hidden" name="status" value="{{ request('status') }}" id="statusInput">
+                        <input type="hidden" name="category" value="{{ request('category') }}" id="categoryInput">
+                        <input type="hidden" name="sort" value="{{ request('sort', 'desc') }}" id="sortInput">
+
+                        <div class="relative" x-data="{ open: false, showCustom: {{ request('period') == 'custom' ? 'true' : 'false' }} }">
                             <button type="button" @click="open = !open"
-                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="calendar-days" class="w-4 h-4 text-slate-400"></i>
-                                    <span>
-                                        @php
-                                            $periodLabel = 'This Week';
-                                            $p = request('period');
-                                            if($p == 'last_hour') $periodLabel = 'Last Hour';
-                                            elseif($p == 'last_30_mins') $periodLabel = 'Last 30 Min';
-                                            elseif($p == 'last_15_mins') $periodLabel = 'Last 15 Min';
-                                            elseif($p == 'next_hour') $periodLabel = 'Next Hour';
-                                            elseif($p == 'next_30_mins') $periodLabel = 'Next 30 Min';
-                                            elseif($p == 'next_15_mins') $periodLabel = 'Next 15 Min';
-                                            elseif($p == 'today') $periodLabel = 'Today';
-                                            elseif($p == 'this_month') $periodLabel = 'This Month';
-                                            elseif($p == 'this_year') $periodLabel = 'This Year';
-                                            elseif($p == 'all') $periodLabel = 'All Time';
-                                        @endphp
-                                        {{ $periodLabel }}
-                                    </span>
-                                </div>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
-                            </button>
-                            <div x-show="open" @click.away="open = false" 
-                                class="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden max-h-80 overflow-y-auto"
-                                x-transition:enter="transition ease-out duration-200"
-                                x-transition:enter-start="opacity-0 translate-y-2">
-                                <div class="p-2 space-y-1">
-                                    @foreach([
+                                class="px-6 py-4 bg-white text-slate-800 rounded-2xl text-[13px] font-black flex items-center gap-3 border border-slate-200 shadow-sm hover:bg-slate-50 transition-all">
+                                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#e85a2f]"></i>
+                                <span>Advanced Filters</span>
+                                @php
+                                    $activeFilters = 0;
+                                    if(request('period') && request('period') != 'this_week') $activeFilters++;
+                                    if(request('status')) $activeFilters++;
+                                    if(request('category')) $activeFilters++;
+
+                                    $p = request('period', 'this_week');
+                                    $periodLabel = match($p) {
                                         'last_15_mins' => 'Last 15 Min',
                                         'last_30_mins' => 'Last 30 Min',
                                         'last_hour' => 'Last Hour',
@@ -414,77 +400,190 @@
                                         'this_week' => 'This Week',
                                         'this_month' => 'This Month',
                                         'this_year' => 'This Year',
-                                        'all' => 'All Time'
-                                    ] as $val => $label)
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('period', 'this_week') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
-                                        onclick="document.getElementById('periodInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()">{{ $label }}</a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-
-                        <input type="hidden" name="status" value="{{ request('status') }}" id="statusInput">
-                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
-                            <button type="button" @click="open = !open"
-                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-400"></i>
-                                    <span>{{ request('status') ? ucfirst(request('status')) : 'All Status' }}</span>
-                                </div>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
+                                        'all' => 'All Time',
+                                        'custom' => 'Custom Range',
+                                        default => 'This Week'
+                                    };
+                                @endphp
+                                @if($activeFilters > 0)
+                                    <span class="w-5 h-5 bg-[#e85a2f] text-white text-[10px] rounded-full flex items-center justify-center">{{ $activeFilters }}</span>
+                                @endif
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
                             </button>
-                            <div x-show="open" @click.away="open = false" 
-                                class="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden"
-                                x-transition:enter="transition ease-out duration-200"
-                                x-transition:enter-start="opacity-0 translate-y-2">
-                                <div class="p-2 space-y-1">
-                                    @foreach(['' => 'All Status', 'completed' => 'Confirmed', 'pending' => 'Pending', 'cancelled' => 'Cancelled', 'occupied' => 'Occupied'] as $val => $label)
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('status') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
-                                        onclick="document.getElementById('statusInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()">{{ $label }}</a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
 
-                        <input type="hidden" name="category" value="{{ request('category') }}" id="categoryInput">
-                        <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
-                            <button type="button" @click="open = !open"
-                                class="w-full px-5 py-3.5 bg-slate-50 text-slate-600 rounded-2xl text-[13px] font-bold flex items-center justify-between gap-2 border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i>
-                                    <span>{{ request('category') ?: 'Category' }}</span>
-                                </div>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300"></i>
-                            </button>
-                            <div x-show="open" @click.away="open = false" 
-                                class="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden max-h-80 overflow-y-auto"
-                                x-transition:enter="transition ease-out duration-200"
-                                x-transition:enter-start="opacity-0 translate-y-2">
-                                <div class="p-2 space-y-1">
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:bg-slate-50"
-                                        onclick="document.getElementById('categoryInput').value = ''; document.getElementById('bookingFilterForm').submit()">All Categories</a>
-                                    @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('category') == $cat ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
-                                        onclick="document.getElementById('categoryInput').value = '{{ $cat }}'; document.getElementById('bookingFilterForm').submit()">{{ $cat }}</a>
-                                    @endforeach
+
+                            <!-- Filter Modal -->
+                            <div x-show="open" x-cloak
+                                class="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-8"
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0"
+                                x-transition:enter-end="opacity-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100"
+                                x-transition:leave-end="opacity-0">
+                                
+                                <!-- Backdrop -->
+                                <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md" @click="open = false"></div>
+
+                                <!-- Modal Content -->
+                                <div class="relative w-full max-w-5xl bg-white rounded-[3.5rem] shadow-[0_40px_120px_-20px_rgba(0,0,0,0.25)] border border-white/20 overflow-hidden"
+                                    x-show="open"
+                                    x-transition:enter="transition ease-out duration-300 transform"
+                                    x-transition:enter-start="opacity-0 scale-95 translate-y-12"
+                                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                    x-transition:leave="transition ease-in duration-200 transform"
+                                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                    x-transition:leave-end="opacity-0 scale-95 translate-y-12">
+                                    
+                                    <div class="p-12 lg:p-16">
+                                        <!-- Header within Modal -->
+                                        <div class="flex items-center justify-between mb-12">
+                                            <div>
+                                                <h2 class="text-3xl font-black text-slate-800 tracking-tight">Advanced Filters</h2>
+                                                <p class="text-slate-400 font-bold text-sm mt-1">Refine your booking list exactly how you need it.</p>
+                                            </div>
+                                            <button type="button" @click="open = false" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-all">
+                                                <i data-lucide="x" class="w-6 h-6"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="flex flex-col xl:flex-row gap-16">
+                                            <!-- Column 1: Time Period Presets -->
+                                            <div class="w-full xl:w-72 flex-none space-y-8">
+                                                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                    <i data-lucide="clock-4" class="w-4 h-4 text-[#e85a2f]"></i> Time Period Presets
+                                                </h3>
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    @foreach([
+                                                        'last_15_mins' => 'Last 15m', 'last_30_mins' => 'Last 30m', 'last_hour' => 'Last 1h',
+                                                        'next_15_mins' => 'Next 15m', 'next_30_mins' => 'Next 30m', 'next_hour' => 'Next 1h',
+                                                        'today' => 'Today', 'this_week' => 'This Week', 'this_month' => 'This Month',
+                                                        'this_year' => 'This Year', 'all' => 'All Time'
+                                                    ] as $val => $label)
+                                                        <button type="button" 
+                                                            @click="document.getElementById('periodInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
+                                                            class="px-4 py-3.5 text-[11px] font-bold rounded-2xl border-2 {{ request('period', 'this_week') == $val ? 'bg-orange-50 border-orange-200 text-[#e85a2f]' : 'bg-slate-50 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800' }} transition-all">
+                                                            {{ $label }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                                <button type="button" @click="showCustom = !showCustom"
+                                                    class="w-full px-6 py-4 text-[12px] font-black rounded-2xl border-2 {{ request('period') == 'custom' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-900 border-slate-900 text-white shadow-2xl shadow-slate-200' }} transition-all flex items-center justify-center gap-3">
+                                                    <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                                                    Set Custom Range
+                                                </button>
+                                            </div>
+
+                                            <!-- Column 2: Deep Filters -->
+                                            <div class="flex-1 space-y-12">
+                                                <div class="space-y-8">
+                                                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                        <i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Refine by Status
+                                                    </h3>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        @foreach(['' => 'All Bookings', 'pending' => 'Pending', 'confirmed' => 'Confirmed', 'occupied' => 'Occupied', 'billed' => 'Billed', 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'hold' => 'Hold'] as $val => $label)
+                                                            <button type="button" 
+                                                                @click="document.getElementById('statusInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
+                                                                class="px-8 py-4 text-xs font-black rounded-3xl border-2 {{ request('status') == $val ? 'bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-100' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:text-slate-800' }} transition-all">
+                                                                {{ $label }}
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                                    <div class="space-y-4">
+                                                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                            <i data-lucide="layers" class="w-4 h-4 text-emerald-500"></i> Guest Category
+                                                        </h3>
+                                                        <select onchange="document.getElementById('categoryInput').value = this.value; document.getElementById('bookingFilterForm').submit()"
+                                                            class="w-full px-6 py-4.5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] text-[13px] font-bold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-700">
+                                                            <option value="">Filter by Category</option>
+                                                            @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
+                                                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="space-y-4">
+                                                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                            <i data-lucide="arrow-up-down" class="w-4 h-4 text-purple-500"></i> Sort Order
+                                                        </h3>
+                                                        <button type="button" 
+                                                            onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
+                                                            class="w-full px-6 py-4.5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] text-[13px] font-bold flex items-center justify-between gap-3 hover:bg-slate-100 transition-all text-slate-700">
+                                                            <span>Showing: {{ request('sort') == 'asc' ? 'Oldest First' : 'Newest First' }}</span>
+                                                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Custom Range Panel -->
+                                                <div x-show="showCustom" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" class="p-10 bg-slate-50/50 rounded-[2.5rem] border-2 border-slate-50 space-y-8">
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                        <div class="space-y-3">
+                                                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 text-center">Start Time & Date</label>
+                                                            <input type="text" name="start_date" value="{{ request('start_date') }}" placeholder="Click to select start"
+                                                                class="datetime-picker w-full px-6 py-5 bg-white border-2 border-white rounded-3xl text-[14px] font-bold text-center outline-none focus:ring-8 focus:ring-blue-500/5 transition-all shadow-sm">
+                                                        </div>
+                                                        <div class="space-y-3">
+                                                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 text-center">End Time & Date</label>
+                                                            <input type="text" name="end_date" value="{{ request('end_date') }}" placeholder="Click to select end"
+                                                                class="datetime-picker w-full px-6 py-5 bg-white border-2 border-white rounded-3xl text-[14px] font-bold text-center outline-none focus:ring-8 focus:ring-blue-500/5 transition-all shadow-sm">
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" 
+                                                        @click="document.getElementById('periodInput').value = 'custom'; document.getElementById('bookingFilterForm').submit()"
+                                                        class="w-full py-5 bg-blue-600 text-white rounded-3xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-[0_15px_40px_-10px_rgba(37,99,235,0.3)]">
+                                                        Apply Custom Time Range
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Footer Section -->
+                                        <div class="mt-16 pt-10 border-t-2 border-slate-50 flex flex-col md:flex-row items-center justify-between gap-8">
+                                            <div class="flex items-center gap-5">
+                                                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                                                    <i data-lucide="filter" class="w-5 h-5 text-slate-400"></i>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @if(request('period') && request('period') != 'this_week')
+                                                        <span class="px-4 py-2 bg-orange-50 text-[#e85a2f] text-[11px] font-black rounded-xl border-2 border-orange-100 flex items-center gap-2">
+                                                            {{ $periodLabel }}
+                                                        </span>
+                                                    @endif
+                                                    @if(request('status'))
+                                                        <span class="px-4 py-2 bg-blue-50 text-blue-600 text-[11px] font-black rounded-xl border-2 border-blue-100 flex items-center gap-2">
+                                                            {{ ucfirst(request('status')) }}
+                                                        </span>
+                                                    @endif
+                                                    @if(request('category'))
+                                                        <span class="px-4 py-2 bg-emerald-50 text-emerald-600 text-[11px] font-black rounded-xl border-2 border-emerald-100 flex items-center gap-2">
+                                                            {{ request('category') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center gap-8">
+                                                <a href="{{ route('dashboard') }}" class="text-[12px] font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors">
+                                                    Reset All Filters
+                                                </a>
+                                                <button type="button" @click="open = false" 
+                                                    class="px-12 py-5 bg-slate-900 text-white rounded-[2rem] text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200">
+                                                    Return to Dashboard
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <button type="button" onclick="exportToExcel()"
-                            class="flex-1 sm:flex-none px-6 py-3.5 bg-emerald-50 text-emerald-700 rounded-2xl text-[13px] font-bold flex items-center justify-center gap-2 border border-emerald-100/50 hover:bg-emerald-100 transition-colors">
+                            class="px-6 py-4 bg-emerald-50 text-emerald-700 rounded-2xl text-[13px] font-bold flex items-center gap-2.5 border border-emerald-100 hover:bg-emerald-100 transition-all">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             <span>Export</span>
-                        </button>
-
-                        <div class="h-8 w-px bg-slate-100 mx-1 hidden md:block"></div>
-
-                        <input type="hidden" name="sort" value="{{ request('sort', 'desc') }}" id="sortInput">
-                        <button type="button"
-                            onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
-                            class="flex-1 sm:flex-none px-5 py-3.5 bg-slate-50 text-slate-800 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 border border-slate-200/50 hover:bg-slate-200 transition-all">
-                            <i data-lucide="arrow-up-down" class="w-4 h-4 text-slate-500"></i>
-                            <span>{{ request('sort') == 'asc' ? 'Oldest' : 'Newest' }}</span>
                         </button>
                     </div>
                 </div>
@@ -1413,7 +1512,7 @@
                                 <div>
                                     <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Status</label>
                                     <select name="status" x-model="editBookingData.status" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                                        @foreach(['PENDING', 'CONFIRMED', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
+                                        @foreach(['PENDING', 'CONFIRMED', 'HOLD', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
                                             <option value="{{ $st }}">{{ $st }}</option>
                                         @endforeach
                                     </select>

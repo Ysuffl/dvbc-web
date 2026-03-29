@@ -86,13 +86,12 @@ class AdminDashboardController extends Controller
             $search = $request->get('search');
             $recentBookingsQuery->where(function ($q) use ($search) {
                 $q->whereHas('customer', function ($sq) use ($search) {
-                        $sq->where('name', 'ilike', "%$search%");
-                    }
-                    )
-                        ->orWhereHas('tableModel', function ($sq) use ($search) {
+                        $sq->where('name', 'ilike', "%$search%")
+                           ->orWhere('phone', 'ilike', "%$search%");
+                    })
+                    ->orWhereHas('tableModel', function ($sq) use ($search) {
                     $sq->where('code', 'ilike', "%$search%");
-                }
-                );
+                });
             });
         }
 
@@ -146,6 +145,12 @@ class AdminDashboardController extends Controller
         }
         elseif ($period == 'this_year') {
             $recentBookingsQuery->whereYear('start_time', Carbon::now()->year);
+        }
+        elseif ($period == 'custom' && $request->filled('start_date') && $request->filled('end_date')) {
+            $recentBookingsQuery->whereBetween('start_time', [
+                Carbon::parse($request->get('start_date')),
+                Carbon::parse($request->get('end_date'))
+            ]);
         }
 
         $sort = $request->get('sort', 'desc');

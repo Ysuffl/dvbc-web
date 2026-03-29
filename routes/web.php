@@ -51,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
     // ── User Management ───────────────────────────────────────────────────
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::patch('/users/{id}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // ── Master Data ───────────────────────────────────────────────────────
     Route::get('/master', [\App\Http\Controllers\MasterController::class, 'index'])->name('master.index');

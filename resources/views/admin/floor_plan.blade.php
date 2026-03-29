@@ -147,7 +147,12 @@
                 }, 3000);
             }
         } catch (err) {
-            alert('Gagal menyimpan perubahan. Periksa koneksi atau sesi login Anda.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Data Not Saved',
+                text: 'Gagal menyimpan perubahan. Periksa koneksi atau sesi login Anda.',
+                background: '#ffffff',
+            });
             btn.innerHTML = originalHtml;
             btn.disabled = false;
             lucide.createIcons();

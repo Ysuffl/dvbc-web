@@ -465,21 +465,41 @@
                     .then(res => {
                         loading.classList.add('hidden');
                         if (res.status === 'success') {
-                            alert('Import Berhasil!');
-                            window.location.reload();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Import Success',
+                                text: 'Data customer berhasil diimpor.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => window.location.reload());
                         } else {
-                            alert('Gagal Import: ' + res.message);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Import Failed',
+                                text: res.message,
+                                background: '#ffffff',
+                            });
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         loading.classList.add('hidden');
-                        alert('Terjadi kesalahan saat menghubungi server.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Error',
+                            text: 'Terjadi kesalahan saat menghubungi server.',
+                            background: '#ffffff',
+                        });
                     });
                 } catch (error) {
                     console.error('Parsing failed:', error);
                     loading.classList.add('hidden');
-                    alert('Gagal membaca file Excel. Pastikan format benar.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid File',
+                        text: 'Gagal membaca file Excel. Pastikan format benar.',
+                        background: '#ffffff',
+                    });
                 }
             };
             reader.readAsArrayBuffer(file);

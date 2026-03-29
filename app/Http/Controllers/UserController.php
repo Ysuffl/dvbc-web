@@ -31,4 +31,25 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', 'User created successfully!');
     }
+
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['is_active' => !$user->is_active]);
+        
+        return redirect()->back()->with('success', 'User status updated!');
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Prevent self-deletion if current user is being used
+        // if ($user->id === auth()->id()) {
+        //     return redirect()->back()->with('error', 'You cannot delete yourself!');
+        // }
+
+        $user->delete();
+        return redirect()->back()->with('success', 'User deleted successfully!');
+    }
 }

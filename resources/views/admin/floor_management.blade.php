@@ -26,17 +26,6 @@
     </div>
 </div>
 
-{{-- Flash Messages --}}
-@if(session('success'))
-<div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-sm flex items-center gap-2">
-    <i data-lucide="check-circle" class="w-4 h-4"></i> {{ session('success') }}
-</div>
-@endif
-@if(session('error'))
-<div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 font-semibold text-sm flex items-center gap-2">
-    <i data-lucide="alert-circle" class="w-4 h-4"></i> {{ session('error') }}
-</div>
-@endif
 
 {{-- ══════════════════════════════════════════════════════════════════════ --}}
 {{-- AREA TABS --}}
@@ -189,7 +178,7 @@
                                 <button @click="editTable({{ $table->toJson() }})" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                 </button>
-                                <form method="POST" action="{{ route('floor.table.destroy', $table->id) }}" onsubmit="return confirm('Hapus meja {{ $table->code }}?')">
+                                <form method="POST" action="{{ route('floor.table.destroy', $table->id) }}" data-confirm="Hapus meja {{ $table->code }}?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -271,7 +260,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════ --}}
 <div x-show="showAddAreaModal || showEditAreaModal"
      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-     x-transition>
+     x-transition x-cloak>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4" @click.away="closeAreaModals()">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-black text-slate-800 text-lg" x-text="showEditAreaModal ? 'Edit Area' : 'Tambah Area'"></h3>
@@ -310,7 +299,19 @@
                 
                 <template x-if="showEditAreaModal">
                     <button type="button" 
-                            @click="if(confirm('Hapus area ini? Seluruh data layout area ini akan hilang.')) { $refs.deleteAreaForm.submit() }"
+                            @click="Swal.fire({
+                                title: 'Hapus Area?',
+                                text: 'Seluruh data layout area ini akan hilang permanen.',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Ya, Hapus',
+                                background: '#ffffff',
+                                customClass: {
+                                    confirmButton: 'bg-rose-500 px-8 py-3 rounded-xl font-bold text-white mr-3',
+                                    cancelButton: 'bg-slate-100 px-8 py-3 rounded-xl font-bold text-slate-500'
+                                },
+                                buttonsStyling: false
+                            }).then((result) => { if (result.isConfirmed) $refs.deleteAreaForm.submit() })"
                             class="w-full py-2.5 rounded-xl border border-red-200 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2 mt-2">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Area
                     </button>
@@ -330,7 +331,7 @@
 {{-- ══════════════════════════════════════════════════════════════════════ --}}
 <div x-show="showAddTableModal || showEditTableModal"
      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-     x-transition>
+     x-transition x-cloak>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4" @click.away="closeTableModals()">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-black text-slate-800 text-lg" x-text="showEditTableModal ? 'Edit Meja' : 'Tambah Meja'"></h3>
@@ -561,7 +562,12 @@ function floorManager() {
                         setTimeout(() => { target.innerHTML = orig; target.classList.remove('bg-emerald-600'); target.disabled = false; lucide.createIcons(); }, 2500);
                     }
                 } catch(err) {
-                    alert('Gagal menyimpan layout.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Gagal menyimpan layout area.',
+                        background: '#ffffff',
+                    });
                     target.innerHTML = orig;
                     target.disabled = false;
                     lucide.createIcons();

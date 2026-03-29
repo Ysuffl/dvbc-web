@@ -70,7 +70,7 @@
                                             class="text-blue-500 hover:text-blue-700 hover:bg-blue-100 bg-blue-50 p-2.5 rounded-xl transition-colors">
                                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                                         </button>
-                                        <form action="{{ route('master.category.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                        <form action="{{ route('master.category.destroy', $category->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to delete this category?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-rose-500 hover:text-rose-700 hover:bg-rose-100 bg-rose-50 p-2.5 rounded-xl transition-colors">
@@ -126,7 +126,7 @@
                                             class="text-blue-500 hover:text-blue-700 hover:bg-blue-100 bg-blue-50 p-2.5 rounded-xl transition-colors">
                                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                                         </button>
-                                        <form action="{{ route('master.level.destroy', $level->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this level?');">
+                                        <form action="{{ route('master.level.destroy', $level->id) }}" method="POST" class="inline-block" data-confirm="Are you sure you want to delete this level?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-rose-500 hover:text-rose-700 hover:bg-rose-100 bg-rose-50 p-2.5 rounded-xl transition-colors">

@@ -15,7 +15,10 @@
     <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        [x-cloak] { display: none !important; }
         .sidebar { min-height: 100vh; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -25,7 +28,7 @@
     <!-- Mobile Hamburger Bar -->
     <div class="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shrink-0">
         <div class="flex items-center gap-3">
-            <img src="{{ asset('images/dreamville.png') }}" alt="Logo" class="w-8 h-8 object-contain">
+            <img src="{{ asset('images/dreamville.webp') }}" alt="Logo" class="w-8 h-8 object-contain">
             <span class="font-black text-slate-800 tracking-tight text-base">DreamVille</span>
         </div>
         <button @click="sidebarOpen = true" class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 hover:text-blue-500 transition-all">
@@ -52,7 +55,7 @@
         <!-- Brand Header -->
         <div class="px-6 py-8 flex items-center justify-between">
             <div class="bg-white rounded-[1.25rem] p-4 shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center gap-3 group cursor-pointer hover:border-blue-100 transition-all flex-1">
-                <img src="{{ asset('images/dreamville.png') }}" alt="DreamVille Logo" class="w-10 h-10 object-contain rounded-lg">
+                <img src="{{ asset('images/dreamville.webp') }}" alt="DreamVille Logo" class="w-10 h-10 object-contain rounded-lg">
                 <span class="font-black text-slate-800 tracking-tight text-lg">DreamVille</span>
             </div>
             <button @click="sidebarOpen = false" class="lg:hidden ml-3 p-2 text-slate-400 hover:text-slate-600">
@@ -131,6 +134,90 @@
     <!-- Initialize Lucide Icons -->
     <script>
         lucide.createIcons();
+
+        // SweetAlert2 Global Configuration & Interceptors
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Handle Flash Messages from Laravel Session
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "{{ session('success') }}",
+                    timer: 3000,
+                    showConfirmButton: false,
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    iconColor: '#10b981',
+                    customClass: {
+                        popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
+                    }
+                });
+            @endif
+
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Occurred',
+                    text: "{{ session('error') }}",
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    iconColor: '#ef4444',
+                    customClass: {
+                        popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
+                        confirmButton: 'bg-indigo-600 px-8 py-3 rounded-xl font-bold text-sm text-white hover:bg-indigo-700 transition-all focus:ring-4 focus:ring-indigo-500/20 outline-none'
+                    }
+                });
+            @endif
+
+            // 2. Global Confirm Interceptor for forms with data-confirm
+            document.addEventListener('submit', (e) => {
+                const form = e.target;
+                if (form.hasAttribute('data-confirm')) {
+                    e.preventDefault();
+                    const message = form.getAttribute('data-confirm');
+                    
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true,
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        iconColor: '#f59e0b',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 shadow-2xl p-8',
+                            confirmButton: 'bg-rose-500 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-white hover:bg-rose-600 transition-all focus:ring-4 focus:ring-rose-500/20 outline-none ml-3',
+                            cancelButton: 'bg-slate-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all outline-none'
+                        },
+                        buttonsStyling: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.removeAttribute('data-confirm');
+                            form.submit();
+                        }
+                    });
+                }
+            });
+        });
+
+        // 3. Helper for generic Alerts (replaces window.alert)
+        window.alert = function(message) {
+            Swal.fire({
+                text: message,
+                icon: 'info',
+                confirmButtonText: 'Understand',
+                background: '#ffffff',
+                color: '#0f172a',
+                customClass: {
+                    popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
+                    confirmButton: 'bg-indigo-600 px-8 py-3 rounded-xl font-bold text-sm text-white hover:bg-indigo-700 transition-all focus:ring-4 focus:ring-indigo-500/20 outline-none'
+                },
+                buttonsStyling: false
+            });
+        };
     </script>
     @yield('scripts')
 </body>

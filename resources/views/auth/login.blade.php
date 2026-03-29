@@ -162,7 +162,7 @@
             <div class="left-content">
                 <div class="logo-container">
                     <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 10px; border-radius: 15px;">
-                        <img src="{{ asset('images/dreamville.png') }}" class="logo-img" alt="Logo">
+                        <img src="{{ asset('images/dreamville.webp') }}" class="logo-img" alt="Logo">
                     </div>
                     <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">DreamVille</span>
                 </div>
@@ -189,7 +189,7 @@
                 
                 <!-- Mobile Logo -->
                 <div class="lg-hidden-custom" style="text-align: center; margin-bottom: 40px; display: none;">
-                    <img src="{{ asset('images/dreamville.png') }}" style="height: 60px; width: auto; margin-bottom: 10px;" alt="Logo">
+                    <img src="{{ asset('images/dreamville.webp') }}" style="height: 60px; width: auto; margin-bottom: 10px;" alt="Logo">
                     <h2 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0;">DreamVille</h2>
                 </div>
 
