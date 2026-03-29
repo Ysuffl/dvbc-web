@@ -261,6 +261,20 @@ class AdminDashboardController extends Controller
 
         $dbCategory = $categoryMap[$validated['customer_category']] ?? str_replace(' ', '_', strtolower($validated['customer_category']));
 
+        // Overlap Check (Ignore Cancelled/Hold and Expired bookings)
+        $now = now();
+        $overlap = Booking::where('table_id', $validated['table_id'])
+            ->whereNotIn(DB::raw('LOWER(CAST(status AS TEXT))'), ['cancelled', 'hold'])
+            ->where('start_time', '<', $validated['end_time'])
+            ->where('end_time', '>', $validated['start_time'])
+            ->where('end_time', '>', $now)
+            ->exists();
+
+        if ($overlap) {
+            return redirect()->back()->withErrors(['error' => 'Table is already booked during this time!']);
+        }
+
+
         $customer = Customer::firstOrCreate(
             ['phone' => $validated['phone'] ?? ''],
             [
@@ -396,6 +410,21 @@ class AdminDashboardController extends Controller
         }
         if (!empty($updates)) {
             $customer->update($updates);
+        }
+
+        // Overlap Check for all selected tables
+        $now = now();
+        foreach ($request->table_ids as $table_id) {
+            $overlap = Booking::where('table_id', $table_id)
+                ->whereNotIn(DB::raw('LOWER(CAST(status AS TEXT))'), ['cancelled', 'hold'])
+                ->where('start_time', '<', $validated['end_time'])
+                ->where('end_time', '>', $validated['start_time'])
+                ->where('end_time', '>', $now)
+                ->exists();
+
+            if ($overlap) {
+                return redirect()->back()->withErrors(['error' => "Table ID ($table_id) is already booked during this time!"]);
+            }
         }
 
         foreach ($request->table_ids as $table_id) {
