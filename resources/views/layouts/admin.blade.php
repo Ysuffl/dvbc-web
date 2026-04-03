@@ -4,34 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DreamVille Admin Dashboard</title>
-    <!-- Use Breeze's Tailwind if available, or fallback to CDN -->
+    <!-- Local Bundled Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         [x-cloak] { display: none !important; }
         .sidebar { min-height: 100vh; }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col lg:flex-row text-gray-800" x-data="{ sidebarOpen: false }">
+<body class="bg-[#FBFBF9] flex flex-col lg:flex-row text-[#2D2D2D] items-start" x-data="{ sidebarOpen: false }">
     <!-- Mobile Hamburger Bar -->
-    <div class="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shrink-0">
+    <div class="lg:hidden bg-white/80 backdrop-blur-md border-b border-stone-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shrink-0">
         <div class="flex items-center gap-3">
-            <img src="{{ asset('images/dreamville.webp') }}" alt="Logo" class="w-8 h-8 object-contain">
-            <span class="font-black text-slate-800 tracking-tight text-base">DreamVille</span>
+            <div class="w-9 h-9 bg-brand-light rounded-lg flex items-center justify-center p-1.5 border border-brand-soft">
+                <img src="{{ asset('images/dreamville.webp') }}" alt="Logo" class="w-full h-full object-contain">
+            </div>
+            <span class="font-extrabold text-stone-800 tracking-tight text-base uppercase">DreamVille</span>
         </div>
-        <button @click="sidebarOpen = true" class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 hover:text-blue-500 transition-all">
+        <button @click="sidebarOpen = true" class="p-2.5 bg-stone-50 border border-stone-100 rounded-xl text-stone-500 hover:text-brand-primary transition-all">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </div>
@@ -45,87 +35,124 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="sidebarOpen = false" 
-         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-[60] lg:hidden"
          style="display: none;">
     </div>
 
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-           class="fixed lg:sticky lg:top-0 h-screen w-72 bg-[#f8fafc] border-r border-slate-200/60 flex flex-col z-[70] transition-transform duration-300 ease-in-out shrink-0">
+           class="fixed lg:sticky lg:top-0 h-screen w-72 bg-white border-r border-stone-200/80 flex flex-col z-[70] transition-transform duration-300 ease-in-out shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        
         <!-- Brand Header -->
-        <div class="px-6 py-8 flex items-center justify-between">
-            <div class="bg-white rounded-[1.25rem] p-4 shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center gap-3 group cursor-pointer hover:border-blue-100 transition-all flex-1">
-                <img src="{{ asset('images/dreamville.webp') }}" alt="DreamVille Logo" class="w-10 h-10 object-contain rounded-lg">
-                <span class="font-black text-slate-800 tracking-tight text-lg">DreamVille</span>
+        <div class="px-8 py-10">
+            <div class="flex items-center gap-4 group cursor-pointer">
+                <div class="relative">
+                    <div class="absolute -inset-2 bg-brand-primary/5 rounded-2xl blur-lg group-hover:bg-brand-primary/10 transition-all"></div>
+                    <div class="relative w-12 h-12 bg-white rounded-2xl shadow-sm border border-brand-soft flex items-center justify-center p-2 group-hover:scale-105 transition-all duration-300">
+                        <img src="{{ asset('images/dreamville.webp') }}" alt="DreamVille Logo" class="w-full h-full object-contain">
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-extrabold text-stone-900 tracking-tighter text-xl leading-none">DreamVille</span>
+                    <span class="text-[10px] font-bold text-brand-primary uppercase tracking-[0.2em] mt-1">Management</span>
+                </div>
             </div>
-            <button @click="sidebarOpen = false" class="lg:hidden ml-3 p-2 text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
         </div>
 
         <!-- Menu -->
-        <div class="flex-1 px-4 space-y-8 overflow-y-auto mt-4">
+        <div id="sidebarMenu" class="flex-1 px-4 space-y-10 overflow-y-auto">
             <!-- Main Section -->
             <div>
-                <div class="px-4 mb-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    Main Menu
+                <div class="px-4 mb-4 text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.3em]">
+                    Core Operations
                 </div>
-                <nav class="space-y-1.5">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="home" class="w-5 h-5 {{ request()->routeIs('dashboard') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Dashboard</span>
+                <nav class="space-y-1">
+                    <a href="{{ request()->routeIs('dashboard') ? 'javascript:void(0)' : route('dashboard') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('dashboard'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="layout-grid" class="w-5 h-5 {{ request()->routeIs('dashboard') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Overview</span>
                     </a>
-                    <a href="{{ route('floor.index') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('floor.*') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5 {{ request()->routeIs('floor.*') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Floor Management</span>
+                    
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ request()->routeIs('floor.*') ? 'javascript:void(0)' : route('floor.index') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('floor.*') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('floor.*'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="layers" class="w-5 h-5 {{ request()->routeIs('floor.*') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Floor Mapping</span>
                     </a>
-                    <a href="{{ route('customers') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('customers') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="contact" class="w-5 h-5 {{ request()->routeIs('customers') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Customer CRM</span>
+                    @endif
+
+                    <a href="{{ request()->routeIs('customers') ? 'javascript:void(0)' : route('customers') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('customers') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('customers'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="users" class="w-5 h-5 {{ request()->routeIs('customers') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Customer Hub</span>
                     </a>
-                    <a href="{{ route('demographics') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('demographics') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="pie-chart" class="w-5 h-5 {{ request()->routeIs('demographics') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Demographics</span>
+
+                    @if(auth()->user()->role === 'admin')
+                    <a href="{{ request()->routeIs('demographics') ? 'javascript:void(0)' : route('demographics') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('demographics') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('demographics'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 {{ request()->routeIs('demographics') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Insights & Data</span>
                     </a>
+                    <a href="{{ request()->routeIs('broadcast.*') ? 'javascript:void(0)' : route('broadcast.index') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('broadcast.*') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('broadcast.*'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="send" class="w-5 h-5 {{ request()->routeIs('broadcast.*') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Broadcast HQ</span>
+                    </a>
+                    @endif
                 </nav>
             </div>
 
+            @if(auth()->user()->role === 'admin')
             <!-- Management Section -->
             <div>
-                <div class="px-4 mb-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    Administration
+                <div class="px-4 mb-4 text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.3em]">
+                    Enterprise
                 </div>
-                <nav class="space-y-1.5">
-                    <a href="{{ route('users.index') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="shield-check" class="w-5 h-5 {{ request()->routeIs('users.*') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">User Management</span>
+                <nav class="space-y-1">
+                    <a href="{{ request()->routeIs('users.*') ? 'javascript:void(0)' : route('users.index') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('users.*') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('users.*'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="shield" class="w-5 h-5 {{ request()->routeIs('users.*') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Staff Access</span>
                     </a>
-                    <a href="{{ route('master.index') }}" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-200 {{ request()->routeIs('master.*') ? 'bg-[#eef2ff] text-[#4f46e5]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
-                        <i data-lucide="database" class="w-5 h-5 {{ request()->routeIs('master.*') ? 'text-[#4f46e5]' : '' }}"></i>
-                        <span class="font-bold text-[13px]">Master Data</span>
-                    </a>
-                    <a href="#" class="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                        <span class="font-bold text-[13px]">Settings</span>
+                    <a href="{{ request()->routeIs('master.*') ? 'javascript:void(0)' : route('master.index') }}" class="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-xl transition-all duration-300 {{ request()->routeIs('master.*') ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'text-stone-500 hover:bg-brand-light hover:text-brand-primary' }}">
+                        @if(request()->routeIs('master.*'))
+                        <div class="absolute inset-y-2.5 -left-1 w-1 bg-white rounded-full"></div>
+                        @endif
+                        <i data-lucide="box" class="w-5 h-5 {{ request()->routeIs('master.*') ? 'text-white' : 'group-hover:scale-110 transition-transform' }}"></i>
+                        <span class="font-bold text-[13px]">Master Settings</span>
                     </a>
                 </nav>
             </div>
+            @endif
         </div>
         
-        <!-- Bottom Logout Area -->
-        <div class="p-6 mt-auto shrink-0">
+        <!-- Logout -->
+        <div class="p-6 mt-auto">
+
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="flex items-center justify-center gap-3 w-full px-6 py-4 bg-white border border-slate-100 rounded-[1.25rem] text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 font-bold text-[13px] shadow-sm transition-all group">
+                <button type="submit" class="flex items-center justify-center gap-3 w-full px-6 py-3.5 bg-stone-900 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 font-bold text-[13px] shadow-sm transition-all group">
                     <i data-lucide="log-out" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
-                    Logout
+                    Sign Out
                 </button>
             </form>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 min-w-0 bg-white">
+    <main class="flex-1 min-w-0 bg-[#FBFBF9]">
         <div class="w-full px-4 sm:px-6 lg:px-10 py-6 sm:py-10">
             @yield('content')
         </div>
@@ -146,10 +173,10 @@
                     timer: 3000,
                     showConfirmButton: false,
                     background: '#ffffff',
-                    color: '#0f172a',
+                    color: '#2D2D2D',
                     iconColor: '#10b981',
                     customClass: {
-                        popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
+                        popup: 'rounded-[1.5rem] border border-stone-100 shadow-2xl',
                     }
                 });
             @endif
@@ -160,16 +187,27 @@
                     title: 'Error Occurred',
                     text: "{{ session('error') }}",
                     background: '#ffffff',
-                    color: '#0f172a',
+                    color: '#2D2D2D',
                     iconColor: '#ef4444',
                     customClass: {
-                        popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
-                        confirmButton: 'bg-indigo-600 px-8 py-3 rounded-xl font-bold text-sm text-white hover:bg-indigo-700 transition-all focus:ring-4 focus:ring-indigo-500/20 outline-none'
+                        popup: 'rounded-[1.5rem] border border-stone-100 shadow-2xl',
+                        confirmButton: 'bg-stone-900 px-8 py-3 rounded-xl font-bold text-sm text-white hover:bg-stone-800 transition-all focus:ring-4 focus:ring-brand-primary/20 outline-none'
                     }
                 });
             @endif
 
-            // 2. Global Confirm Interceptor for forms with data-confirm
+            // 2. Maintain Sidebar Scroll Position
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            if (sidebarMenu) {
+                const scrollPos = sessionStorage.getItem('sidebarScrollPos');
+                if (scrollPos) sidebarMenu.scrollTop = parseInt(scrollPos);
+                
+                sidebarMenu.addEventListener('scroll', () => {
+                    sessionStorage.setItem('sidebarScrollPos', sidebarMenu.scrollTop);
+                });
+            }
+
+            // 3. Global Confirm Interceptor for forms with data-confirm
             document.addEventListener('submit', (e) => {
                 const form = e.target;
                 if (form.hasAttribute('data-confirm')) {
@@ -185,12 +223,12 @@
                         cancelButtonText: 'Cancel',
                         reverseButtons: true,
                         background: '#ffffff',
-                        color: '#0f172a',
-                        iconColor: '#f59e0b',
+                        color: '#2D2D2D',
+                        iconColor: '#A68A56',
                         customClass: {
-                            popup: 'rounded-[2rem] border border-slate-100 shadow-2xl p-8',
-                            confirmButton: 'bg-rose-500 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-white hover:bg-rose-600 transition-all focus:ring-4 focus:ring-rose-500/20 outline-none ml-3',
-                            cancelButton: 'bg-slate-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all outline-none'
+                            popup: 'rounded-[2rem] border border-stone-100 shadow-2xl p-8',
+                            confirmButton: 'bg-brand-primary px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-white hover:opacity-90 transition-all focus:ring-4 focus:ring-brand-primary/20 outline-none ml-3',
+                            cancelButton: 'bg-stone-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-stone-500 hover:bg-stone-200 transition-all outline-none'
                         },
                         buttonsStyling: false
                     }).then((result) => {
@@ -203,17 +241,17 @@
             });
         });
 
-        // 3. Helper for generic Alerts (replaces window.alert)
+        // 4. Helper for generic Alerts (replaces window.alert)
         window.alert = function(message) {
             Swal.fire({
                 text: message,
                 icon: 'info',
                 confirmButtonText: 'Understand',
                 background: '#ffffff',
-                color: '#0f172a',
+                color: '#2D2D2D',
                 customClass: {
-                    popup: 'rounded-[1.5rem] border border-slate-100 shadow-2xl',
-                    confirmButton: 'bg-indigo-600 px-8 py-3 rounded-xl font-bold text-sm text-white hover:bg-indigo-700 transition-all focus:ring-4 focus:ring-indigo-500/20 outline-none'
+                    popup: 'rounded-[1.5rem] border border-stone-100 shadow-2xl',
+                    confirmButton: 'bg-brand-primary px-8 py-3 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-all focus:ring-4 focus:ring-brand-primary/20 outline-none'
                 },
                 buttonsStyling: false
             });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\MasterCategory;
 use App\Models\MasterLevel;
+use App\Models\BroadcastTemplate;
 
 class MasterController extends Controller
 {
@@ -12,7 +13,8 @@ class MasterController extends Controller
     {
         $categories = MasterCategory::all();
         $levels = MasterLevel::orderBy('min_spending', 'asc')->get();
-        return view('admin.master', compact('categories', 'levels'));
+        $templates = BroadcastTemplate::orderBy('created_at', 'desc')->get();
+        return view('admin.master', compact('categories', 'levels', 'templates'));
     }
 
     // --- Category Methods ---
@@ -81,5 +83,37 @@ class MasterController extends Controller
     {
         MasterLevel::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Level deleted successfully');
+    }
+
+    // --- Template Methods ---
+    public function storeTemplate(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'message' => 'required|string',
+            'type' => 'required|string|in:promotion,info,greeting',
+        ]);
+        
+        BroadcastTemplate::create($validated);
+        return redirect()->back()->with('success', 'Template created successfully');
+    }
+
+    public function updateTemplate(Request $request, $id)
+    {
+        $template = BroadcastTemplate::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'message' => 'required|string',
+            'type' => 'required|string|in:promotion,info,greeting',
+        ]);
+        
+        $template->update($validated);
+        return redirect()->back()->with('success', 'Template updated successfully');
+    }
+
+    public function destroyTemplate($id)
+    {
+        BroadcastTemplate::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Template deleted successfully');
     }
 }

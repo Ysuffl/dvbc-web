@@ -36,28 +36,27 @@ class AdminDashboardController extends Controller
         // Auto-clean UI logic (Sync with App): 
         // If a table has no valid active/upcoming bookings, force it to 'available' 
         // even if the database status is stale.
-        $tables->each(function ($table) {
+        $tables->each(function (Table $table) {
             $now = now();
             $validBookings = $table->bookings->filter(function ($b) use ($now) {
-                    $status = strtolower($b->status);
-                    // Keep if they are already at the table
-                    if (in_array($status, ['occupied', 'arrived']))
-                        return true;
-
-                    // For pending/confirmed, check if time has passed (give 5 min grace)
-                    $endTime = \Carbon\Carbon::parse($b->end_time);
-                    if ($endTime->addMinutes(5)->isBefore($now))
-                        return false;
-
+                $status = strtolower($b->status);
+                // Keep if they are already at the table
+                if (in_array($status, ['occupied', 'arrived']))
                     return true;
-                }
-                );
 
-                // Re-assign the filtered bookings collection back to the table model
-                // this ensures the Blade only sees 'valid' current bookings
-                $table->setRelation('bookings', $validBookings);
+                // For pending/confirmed, check if time has passed (give 5 min grace)
+                $endTime = \Carbon\Carbon::parse($b->end_time);
+                if ($endTime->addMinutes(5)->isBefore($now))
+                    return false;
 
-                $status = strtolower($table->status);
+                return true;
+            });
+
+            // Re-assign the filtered bookings collection back to the table model
+            // this ensures the Blade only sees 'valid' current bookings
+            $table->setRelation('bookings', $validBookings);
+
+            $status = strtolower($table->status);
 
                 if ($validBookings->isEmpty()) {
                     // Check if table is on HOLD and not expired
@@ -234,10 +233,14 @@ class AdminDashboardController extends Controller
 
         $tags = MasterTag::all()->groupBy('group_name');
 
+        $allActiveBookings = Booking::whereNotIn(DB::raw('LOWER(CAST(status AS TEXT))'), ['cancelled', 'hold', 'completed', 'billed', 'ok', 'finished', 'done', 'paid'])
+            ->where('end_time', '>', now())
+            ->get(['id', 'table_id', 'start_time', 'end_time']);
+
         return view('admin.dashboard', compact(
             'tables', 'recentBookings', 'stats', 'floors', 'selectedFloor',
             'allTables', 'categoryStats', 'listTotals', 'allFilteredBookings',
-            'customers', 'categoryMap', 'tags'
+            'customers', 'categoryMap', 'tags', 'allActiveBookings'
         ));
     }
 

@@ -7,28 +7,28 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Room Status -->
         <div
-            class="lg:col-span-2 bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 border border-gray-50/50">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Table Status</h2>
+            class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-8 border border-stone-200 hover:border-brand-soft transition-all">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <h2 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Table Status</h2>
                 <div class="flex items-center gap-3">
                     <form action="{{ route('dashboard') }}" method="GET" id="floorFilterForm">
                         <input type="hidden" name="floor" value="{{ request('floor', $selectedFloor) }}" id="floorInput">
                         <div class="relative group" x-data="{ open: false }">
                             <button type="button" @click="open = !open"
-                                class="px-6 py-3.5 bg-white border border-slate-200 rounded-[1.25rem] text-[13px] font-black text-slate-800 flex items-center gap-3 shadow-sm hover:border-blue-200 transition-all">
-                                <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+                                class="px-5 py-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-800 flex items-center gap-3 shadow-sm hover:border-brand-primary hover:text-brand-primary transition-all uppercase tracking-wider">
+                                <i data-lucide="layers" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary transition-colors"></i>
                                 <span>{{ $floors->contains(request('floor', $selectedFloor)) ? str_replace('_', ' ', strtoupper(request('floor', $selectedFloor))) : 'ALL AREA' }}</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300 group-hover:text-blue-400 transition-colors"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary transition-colors"></i>
                             </button>
                             <div x-show="open" @click.away="open = false" 
                                 class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-50 z-50 overflow-hidden"
                                 x-transition:enter="transition ease-out duration-200"
                                 x-transition:enter-start="opacity-0 translate-y-2">
                                 <div class="p-2 space-y-1">
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ !request('floor') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                    <a href="javascript:void(0)" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ !request('floor') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
                                         onclick="document.getElementById('floorInput').value = ''; document.getElementById('floorFilterForm').submit()">ALL AREA</a>
                                     @foreach($floors as $f)
-                                    <a href="#" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('floor', $selectedFloor) == $f ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
+                                    <a href="javascript:void(0)" class="block px-4 py-2.5 text-sm font-bold rounded-xl transition-colors {{ request('floor', $selectedFloor) == $f ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}"
                                         onclick="document.getElementById('floorInput').value = '{{ $f }}'; document.getElementById('floorFilterForm').submit()">{{ str_replace('_', ' ', strtoupper($f)) }}</a>
                                     @endforeach
                                 </div>
@@ -202,12 +202,12 @@
         </div>
 
         <!-- This Week Stats Card -->
-        <div class="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 border border-gray-50/50">
-            <div class="relative inline-block text-left mb-10" x-data="{ openPeriod: false }">
+        <div class="bg-white rounded-2xl shadow-sm p-8 border border-stone-200 hover:border-brand-soft transition-all">
+            <div class="relative inline-block text-left mb-8" x-data="{ openPeriod: false }">
                 <button type="button" @click="openPeriod = !openPeriod"
-                    class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-slate-50 rounded-2xl border border-slate-100/50 hover:bg-slate-100 transition-colors">
-                    <i data-lucide="calendar-range" class="w-4 h-4 text-slate-500"></i>
-                    <span class="text-sm font-black text-slate-600 uppercase tracking-tight">
+                    class="inline-flex items-center gap-2.5 px-4 py-2 bg-stone-50 rounded-lg border border-stone-200 hover:bg-white hover:border-brand-primary hover:text-brand-primary transition-colors uppercase tracking-wider group">
+                    <i data-lucide="calendar-range" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary"></i>
+                    <span class="text-xs font-bold text-stone-600 group-hover:text-brand-primary uppercase tracking-tight">
                         @php
                             $periodLabels = [
                                 'today' => 'Today',
@@ -218,7 +218,7 @@
                             echo $periodLabels[request('period', 'this_week')] ?? 'This Week';
                         @endphp
                     </span>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary"></i>
                 </button>
                 <div x-show="openPeriod" @click.away="openPeriod = false"
                     class="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden"
@@ -231,7 +231,7 @@
                     <div class="p-2 space-y-1">
                         @foreach(['today' => 'Today', 'this_week' => 'This Week', 'this_month' => 'This Month', 'this_year' => 'This Year'] as $val => $label)
                         <a href="{{ request()->fullUrlWithQuery(['period' => $val]) }}"
-                            class="block px-4 py-2.5 text-sm font-bold rounded-lg transition-colors {{ request('period', 'this_week') == $val ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50' }}">
+                            class="block px-4 py-2 text-xs font-extrabold rounded-lg transition-colors {{ request('period', 'this_week') == $val ? 'bg-brand-light text-brand-primary' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900' }} uppercase tracking-tight">
                             {{ $label }}
                         </a>
                         @endforeach
@@ -239,101 +239,90 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-5">
+            <div class="grid grid-cols-2 gap-4">
                 <!-- Booked Rooms -->
-                <div
-                    class="bg-[#f0fdf4]/50 p-8 rounded-[2rem] border border-[#dcfce7]/50 hover:shadow-lg hover:shadow-emerald-500/5 transition-all group">
-                    <div
-                        class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                        <i data-lucide="door-open" class="w-6 h-6 text-emerald-600"></i>
+                <div class="bg-stone-50 p-6 rounded-xl border border-stone-200 hover:border-brand-soft transition-all group">
+                    <div class="w-10 h-10 bg-white shadow-sm border border-stone-100 rounded-lg flex items-center justify-center mb-4 text-stone-500 group-hover:text-brand-primary transition-colors">
+                        <i data-lucide="door-open" class="w-5 h-5"></i>
                     </div>
-                    <p class="text-3xl font-black text-slate-800 tracking-tighter">{{ $stats['booked_rooms'] }}</p>
-                    <p class="text-xs text-slate-400 font-black uppercase tracking-widest mt-1.5">Booked Tables</p>
+                    <p class="text-2xl font-extrabold text-stone-900 tracking-tighter">{{ $stats['booked_rooms'] }}</p>
+                    <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1">Booked Tables</p>
                 </div>
 
                 <!-- Pending -->
-                <div
-                    class="bg-[#fdf2f8]/50 p-8 rounded-[2rem] border border-[#fce7f3]/50 hover:shadow-lg hover:shadow-pink-500/5 transition-all group">
-                    <div
-                        class="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                        <i data-lucide="timer" class="w-6 h-6 text-pink-600"></i>
+                <div class="bg-stone-50 p-6 rounded-xl border border-stone-200 hover:border-brand-soft transition-all group">
+                    <div class="w-10 h-10 bg-white shadow-sm border border-stone-100 rounded-lg flex items-center justify-center mb-4 text-stone-500 group-hover:text-brand-primary transition-colors">
+                        <i data-lucide="timer" class="w-5 h-5"></i>
                     </div>
-                    <p class="text-3xl font-black text-slate-800 tracking-tighter">{{ $stats['pending'] }}</p>
-                    <p class="text-xs text-slate-400 font-black uppercase tracking-widest mt-1.5">Pending</p>
+                    <p class="text-2xl font-extrabold text-stone-900 tracking-tighter">{{ $stats['pending'] }}</p>
+                    <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1">Pending</p>
                 </div>
 
                 <!-- Canceled -->
-                <div
-                    class="bg-[#f5f3ff]/50 p-8 rounded-[2rem] border border-[#ede9fe]/50 hover:shadow-lg hover:shadow-violet-500/5 transition-all group">
-                    <div
-                        class="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                        <i data-lucide="ban" class="w-6 h-6 text-violet-600"></i>
+                <div class="bg-stone-50 p-6 rounded-xl border border-stone-200 hover:border-brand-soft transition-all group">
+                    <div class="w-10 h-10 bg-white shadow-sm border border-stone-100 rounded-lg flex items-center justify-center mb-4 text-stone-500 group-hover:text-brand-primary transition-colors">
+                        <i data-lucide="ban" class="w-5 h-5"></i>
                     </div>
-                    <p class="text-3xl font-black text-slate-800 tracking-tighter">{{ $stats['cancelled'] }}</p>
-                    <p class="text-xs text-slate-400 font-black uppercase tracking-widest mt-1.5">Canceled</p>
+                    <p class="text-2xl font-extrabold text-stone-900 tracking-tighter">{{ $stats['cancelled'] }}</p>
+                    <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-1">Canceled</p>
                 </div>
 
-                <!-- Revenue -->
-                <div
-                    class="bg-[#fff7ed]/50 p-8 rounded-[2rem] border border-[#ffedd5]/50 hover:shadow-lg hover:shadow-orange-500/5 transition-all group">
-                    <div
-                        class="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                        <i data-lucide="banknote" class="w-6 h-6 text-orange-600"></i>
+                <!-- Revenue - Full Width to prevent overflow -->
+                <div class="col-span-2 bg-brand-light p-6 rounded-xl border border-brand-soft hover:border-brand-primary transition-all group relative overflow-hidden">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-white shadow-sm border border-brand-primary/20 rounded-xl flex-none flex items-center justify-center text-brand-primary">
+                            <i data-lucide="banknote" class="w-7 h-7"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] text-brand-primary font-extrabold uppercase tracking-widest mb-1">Total Revenue</p>
+                            <p class="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tighter truncate tabular-nums">
+                                Rp {{ number_format($stats['total_revenue'], 0, ',', '.') }}
+                            </p>
+                        </div>
                     </div>
-                    <p class="text-3xl font-black text-slate-800 tracking-tighter">IDR {{
-                        number_format($stats['total_revenue']) }}</p>
-                    <p class="text-xs text-slate-400 font-black uppercase tracking-widest mt-1.5">Total Revenue</p>
+                    <!-- Decorative element for professional feel -->
+                    <div class="absolute -right-4 -bottom-4 opacity-[0.03] text-brand-primary">
+                        <i data-lucide="trending-up" class="w-24 h-24"></i>
+                    </div>
                 </div>
             </div>
 
             <!-- Category Breakdown -->
-            <div class="mt-8 pt-8 border-t border-slate-50">
+            <div class="mt-10 pt-8 border-t border-stone-100">
                 <div class="flex items-center justify-between mb-6 px-2">
-                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-[0.2em]">Customer Segmentation</h3>
-                    <div class="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-lg">
-                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
-                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Live</span>
+                    <h3 class="text-[11px] font-extrabold text-stone-900 uppercase tracking-[0.25em]">Customer Segmentation</h3>
+                    <div class="flex items-center gap-1.5 px-3 py-1 bg-brand-light rounded-lg border border-brand-soft/30">
+                        <span class="w-1.5 h-1.5 bg-brand-primary rounded-full animate-pulse"></span>
+                        <span class="text-[9px] font-extrabold text-brand-primary uppercase tracking-widest">Live</span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div class="grid grid-cols-2 gap-3">
                     @php
                     $categories = [
-                    'REGULER' => ['icon' => 'user', 'bg' => 'bg-slate-50', 'text' => 'text-slate-500', 'border' =>
-                    'border-slate-100'],
-                    'EVENT' => ['icon' => 'megaphone', 'bg' => 'bg-indigo-50/50', 'text' => 'text-indigo-600', 'border'
-                    => 'border-indigo-100/50'],
-                    'PRIORITAS' => ['icon' => 'crown', 'bg' => 'bg-amber-50/50', 'text' => 'text-amber-600', 'border' =>
-                    'border-amber-100/50'],
-                    'BIG_SPENDER' => ['icon' => 'dollar-sign', 'bg' => 'bg-emerald-50/50', 'text' => 'text-emerald-600',
-                    'border' => 'border-emerald-100/50'],
-                    'DRINKER' => ['icon' => 'glass-water', 'bg' => 'bg-blue-50/50', 'text' => 'text-blue-600', 'border'
-                    => 'border-blue-100/50'],
-                    'PARTY' => ['icon' => 'sparkles', 'bg' => 'bg-purple-50/50', 'text' => 'text-purple-600', 'border'
-                    => 'border-purple-100/50'],
-                    'DINNER' => ['icon' => 'utensils-crossed', 'bg' => 'bg-orange-50/50', 'text' => 'text-orange-600',
-                    'border' => 'border-orange-100/50'],
-                    'LUNCH' => ['icon' => 'utensils', 'bg' => 'bg-rose-50/50', 'text' => 'text-rose-600', 'border' =>
-                    'border-rose-100/50'],
-                    'FAMILY' => ['icon' => 'users', 'bg' => 'bg-cyan-50/50', 'text' => 'text-cyan-600', 'border' =>
-                    'border-cyan-100/50'],
-                    'YOUNGSTER' => ['icon' => 'smile', 'bg' => 'bg-pink-50/50', 'text' => 'text-pink-600', 'border' =>
-                    'border-pink-100/50']
+                        'REGULER' => ['icon' => 'user', 'color' => 'text-stone-400', 'bg' => 'bg-stone-50'],
+                        'EVENT' => ['icon' => 'megaphone', 'color' => 'text-indigo-500', 'bg' => 'bg-indigo-50/30'],
+                        'PRIORITAS' => ['icon' => 'crown', 'color' => 'text-amber-500', 'bg' => 'bg-amber-50/30'],
+                        'BIG_SPENDER' => ['icon' => 'dollar-sign', 'color' => 'text-emerald-500', 'bg' => 'bg-emerald-50/30'],
+                        'DRINKER' => ['icon' => 'glass-water', 'color' => 'text-blue-500', 'bg' => 'bg-blue-50/30'],
+                        'PARTY' => ['icon' => 'sparkles', 'color' => 'text-purple-500', 'bg' => 'bg-purple-50/30'],
+                        'DINNER' => ['icon' => 'utensils-crossed', 'color' => 'text-orange-500', 'bg' => 'bg-orange-50/30'],
+                        'LUNCH' => ['icon' => 'utensils', 'color' => 'text-rose-500', 'bg' => 'bg-rose-50/30'],
+                        'FAMILY' => ['icon' => 'users', 'color' => 'text-cyan-500', 'bg' => 'bg-cyan-50/30'],
+                        'YOUNGSTER' => ['icon' => 'smile', 'color' => 'text-pink-500', 'bg' => 'bg-pink-50/30']
                     ];
                     @endphp
 
                     @foreach($categories as $key => $style)
-                    <div
-                        class="{{ $style['bg'] }} p-3.5 rounded-2xl border {{ $style['border'] }} flex items-center gap-3 transition-all hover:shadow-md group">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                            <i data-lucide="{{ $style['icon'] }}" class="w-5 h-5 {{ $style['text'] }}"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-lg font-black text-slate-800 leading-none mb-0.5">{{ $categoryStats[$key] ??
-                                0 }}</p>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider truncate">{{
-                                str_replace('_', ' ', $key) }}</p>
+                    <div class="{{ $style['bg'] }} p-3 rounded-xl border border-transparent hover:border-stone-200 transition-all group cursor-default">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                <i data-lucide="{{ $style['icon'] }}" class="w-4.5 h-4.5 {{ $style['color'] }}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-extrabold text-stone-800 leading-none mb-1">{{ $categoryStats[$key] ?? 0 }}</p>
+                                <p class="text-[9px] font-bold text-stone-500 uppercase tracking-widest truncate">{{ str_replace('_', ' ', $key) }}</p>
+                            </div>
                         </div>
                     </div>
                     @endforeach
@@ -343,20 +332,20 @@
     </div>
 
     <!-- Booking List Card -->
-    <div class="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50/50 overflow-hidden">
-        <div class="p-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden mt-8">
+        <div class="p-8">
             <form action="{{ route('dashboard') }}" method="GET" id="bookingFilterForm"
-                class="flex flex-col gap-8 mb-10">
+                class="flex flex-col gap-6 mb-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Booking List</h2>
+                    <h2 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Booking List</h2>
                     
                     <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                         <button type="button" @click="showBookingModal = true"
-                            class="flex-1 md:flex-none px-6 py-3 bg-white text-slate-800 border border-slate-200 rounded-2xl text-xs font-black flex items-center justify-center gap-2.5 shadow-sm hover:bg-slate-50 transition-all">
-                            <i data-lucide="plus-circle" class="w-4 h-4 text-[#e85a2f]"></i> Add Guest
+                            class="flex-1 md:flex-none px-5 py-2.5 bg-stone-50 text-stone-700 border border-stone-200 rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-white hover:border-brand-primary hover:text-brand-primary transition-all uppercase tracking-wider">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Guest
                         </button>
                         <button type="button" @click="showEventModal = true"
-                            class="flex-1 md:flex-none px-6 py-3 bg-[#e85a2f] text-white rounded-2xl text-xs font-black flex items-center justify-center gap-2.5 shadow-lg shadow-orange-500/20 hover:bg-[#d04a25] transition-all">
+                            class="flex-1 md:flex-none px-5 py-2.5 bg-brand-primary text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-all uppercase tracking-wider">
                             <i data-lucide="megaphone" class="w-4 h-4"></i> Add Event
                         </button>
                     </div>
@@ -365,10 +354,10 @@
                 <div class="flex flex-col lg:flex-row gap-4">
                     <div class="flex-1 relative group min-w-[300px] max-w-md">
                         <i data-lucide="search"
-                            class="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors"></i>
+                            class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-brand-primary transition-colors"></i>
                         <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Search by name, phone, or table..." onchange="this.form.submit()"
-                            class="w-full pl-14 pr-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus-ring-blue-500/5 transition-all outline-none">
+                            placeholder="SEARCH BY NAME, PHONE, OR TABLE..." onchange="this.form.submit()"
+                            class="w-full pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all outline-none uppercase tracking-wider placeholder:text-stone-400">
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2.5">
@@ -379,8 +368,8 @@
 
                         <div class="relative" x-data="{ open: false, showCustom: {{ request('period') == 'custom' ? 'true' : 'false' }} }">
                             <button type="button" @click="open = !open"
-                                class="px-6 py-4 bg-white text-slate-800 rounded-2xl text-[13px] font-black flex items-center gap-3 border border-slate-200 shadow-sm hover:bg-slate-50 transition-all">
-                                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#e85a2f]"></i>
+                                class="px-5 py-3 bg-white text-stone-800 rounded-lg text-[11px] font-bold flex items-center gap-2.5 border border-stone-200 shadow-sm hover:bg-stone-50 hover:text-brand-primary hover:border-brand-soft transition-all uppercase tracking-wider group">
+                                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary"></i>
                                 <span>Advanced Filters</span>
                                 @php
                                     $activeFilters = 0;
@@ -406,9 +395,9 @@
                                     };
                                 @endphp
                                 @if($activeFilters > 0)
-                                    <span class="w-5 h-5 bg-[#e85a2f] text-white text-[10px] rounded-full flex items-center justify-center">{{ $activeFilters }}</span>
+                                    <span class="w-5 h-5 bg-brand-primary text-white text-[10px] rounded flex items-center justify-center font-black">{{ $activeFilters }}</span>
                                 @endif
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-stone-400 group-hover:text-brand-primary"></i>
                             </button>
 
 
@@ -423,7 +412,7 @@
                                 x-transition:leave-end="opacity-0">
                                 
                                 <!-- Backdrop -->
-                                <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md" @click="open = false"></div>
+                                <div class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm" @click="open = false"></div>
 
                                 <!-- Modal Content -->
                                 <div class="relative w-full max-w-5xl bg-white rounded-[3.5rem] shadow-[0_40px_120px_-20px_rgba(0,0,0,0.25)] border border-white/20 overflow-hidden"
@@ -439,102 +428,102 @@
                                         <!-- Header within Modal -->
                                         <div class="flex items-center justify-between mb-12">
                                             <div>
-                                                <h2 class="text-3xl font-black text-slate-800 tracking-tight">Advanced Filters</h2>
-                                                <p class="text-slate-400 font-bold text-sm mt-1">Refine your booking list exactly how you need it.</p>
+                                                <h2 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Advanced Filters</h2>
+                                                <p class="text-stone-500 font-bold text-xs mt-1">Refine your booking list exactly how you need it.</p>
                                             </div>
-                                            <button type="button" @click="open = false" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-all">
-                                                <i data-lucide="x" class="w-6 h-6"></i>
+                                            <button type="button" @click="open = false" class="w-10 h-10 flex items-center justify-center rounded-lg bg-stone-50 text-stone-400 hover:bg-stone-100 hover:text-stone-900 transition-all">
+                                                <i data-lucide="x" class="w-5 h-5"></i>
                                             </button>
                                         </div>
 
-                                        <div class="flex flex-col xl:flex-row gap-16">
-                                            <!-- Column 1: Time Period Presets -->
-                                            <div class="w-full xl:w-72 flex-none space-y-8">
-                                                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                                                    <i data-lucide="clock-4" class="w-4 h-4 text-[#e85a2f]"></i> Time Period Presets
-                                                </h3>
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    @foreach([
-                                                        'last_15_mins' => 'Last 15m', 'last_30_mins' => 'Last 30m', 'last_hour' => 'Last 1h',
-                                                        'next_15_mins' => 'Next 15m', 'next_30_mins' => 'Next 30m', 'next_hour' => 'Next 1h',
-                                                        'today' => 'Today', 'this_week' => 'This Week', 'this_month' => 'This Month',
-                                                        'this_year' => 'This Year', 'all' => 'All Time'
-                                                    ] as $val => $label)
-                                                        <button type="button" 
-                                                            @click="document.getElementById('periodInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
-                                                            class="px-4 py-3.5 text-[11px] font-bold rounded-2xl border-2 {{ request('period', 'this_week') == $val ? 'bg-orange-50 border-orange-200 text-[#e85a2f]' : 'bg-slate-50 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800' }} transition-all">
-                                                            {{ $label }}
-                                                        </button>
-                                                    @endforeach
-                                                </div>
-                                                <button type="button" @click="showCustom = !showCustom"
-                                                    class="w-full px-6 py-4 text-[12px] font-black rounded-2xl border-2 {{ request('period') == 'custom' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-900 border-slate-900 text-white shadow-2xl shadow-slate-200' }} transition-all flex items-center justify-center gap-3">
-                                                    <i data-lucide="calendar-plus" class="w-5 h-5"></i>
-                                                    Set Custom Range
-                                                </button>
-                                            </div>
-
-                                            <!-- Column 2: Deep Filters -->
-                                            <div class="flex-1 space-y-12">
-                                                <div class="space-y-8">
-                                                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                                                        <i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Refine by Status
+                                            <div class="flex flex-col lg:flex-row gap-12">
+                                                <!-- Column 1: Time Period Presets -->
+                                                <div class="w-full lg:w-64 flex-none space-y-6">
+                                                    <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
+                                                        <i data-lucide="clock-4" class="w-4 h-4 text-brand-primary"></i> Time Period
                                                     </h3>
-                                                    <div class="flex flex-wrap gap-3">
-                                                        @foreach(['' => 'All Bookings', 'pending' => 'Pending', 'confirmed' => 'Confirmed', 'occupied' => 'Occupied', 'billed' => 'Billed', 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'hold' => 'Hold'] as $val => $label)
+                                                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                                                        @foreach([
+                                                            'last_15_mins' => 'Last 15m', 'last_30_mins' => 'Last 30m', 'last_hour' => 'Last 1h',
+                                                            'next_15_mins' => 'Next 15m', 'next_30_mins' => 'Next 30m', 'next_hour' => 'Next 1h',
+                                                            'today' => 'Today', 'this_week' => 'This Week', 'this_month' => 'This Month',
+                                                            'this_year' => 'This Year', 'all' => 'All Time'
+                                                        ] as $val => $label)
                                                             <button type="button" 
-                                                                @click="document.getElementById('statusInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
-                                                                class="px-8 py-4 text-xs font-black rounded-3xl border-2 {{ request('status') == $val ? 'bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-100' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:text-slate-800' }} transition-all">
+                                                                @click="document.getElementById('periodInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
+                                                                class="px-4 py-3 text-[10px] font-bold rounded-lg border-2 {{ request('period', 'this_week') == $val ? 'bg-brand-light border-brand-soft text-brand-primary' : 'bg-stone-50 border-transparent text-stone-500 hover:bg-stone-100 hover:text-stone-900' }} transition-all uppercase tracking-tight">
                                                                 {{ $label }}
                                                             </button>
                                                         @endforeach
                                                     </div>
+                                                    <button type="button" @click="showCustom = !showCustom"
+                                                        class="w-full px-5 py-3.5 text-[11px] font-extrabold rounded-lg border-2 {{ request('period') == 'custom' ? 'bg-brand-light border-brand-soft text-brand-primary' : 'bg-stone-900 border-stone-stone-900 text-white shadow-lg' }} transition-all flex items-center justify-center gap-3 uppercase tracking-widest">
+                                                        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                                                        Set Custom Range
+                                                    </button>
                                                 </div>
 
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                                    <div class="space-y-4">
-                                                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                                                            <i data-lucide="layers" class="w-4 h-4 text-emerald-500"></i> Guest Category
+                                                <!-- Column 2: Deep Filters -->
+                                                <div class="flex-1 space-y-10">
+                                                    <div class="space-y-6">
+                                                        <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
+                                                            <i data-lucide="activity" class="w-4 h-4 text-brand-primary"></i> Refine by Status
                                                         </h3>
-                                                        <select onchange="document.getElementById('categoryInput').value = this.value; document.getElementById('bookingFilterForm').submit()"
-                                                            class="w-full px-6 py-4.5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] text-[13px] font-bold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-700">
-                                                            <option value="">Filter by Category</option>
-                                                            @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            @foreach(['' => 'All Bookings', 'pending' => 'Pending', 'confirmed' => 'Confirmed', 'occupied' => 'Occupied', 'billed' => 'Billed', 'completed' => 'Completed', 'cancelled' => 'Cancelled', 'hold' => 'Hold'] as $val => $label)
+                                                                <button type="button" 
+                                                                    @click="document.getElementById('statusInput').value = '{{ $val }}'; document.getElementById('bookingFilterForm').submit()"
+                                                                    class="px-5 py-2.5 text-[10px] font-extrabold rounded-lg border-2 {{ request('status') == $val ? 'bg-brand-primary border-brand-primary text-white' : 'bg-white border-stone-100 text-stone-500 hover:border-stone-300 hover:text-stone-900' }} transition-all uppercase tracking-widest">
+                                                                    {{ $label }}
+                                                                </button>
                                                             @endforeach
-                                                        </select>
+                                                        </div>
                                                     </div>
-                                                    <div class="space-y-4">
-                                                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                                                            <i data-lucide="arrow-up-down" class="w-4 h-4 text-purple-500"></i> Sort Order
-                                                        </h3>
-                                                        <button type="button" 
-                                                            onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
-                                                            class="w-full px-6 py-4.5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] text-[13px] font-bold flex items-center justify-between gap-3 hover:bg-slate-100 transition-all text-slate-700">
-                                                            <span>Showing: {{ request('sort') == 'asc' ? 'Oldest First' : 'Newest First' }}</span>
-                                                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
-                                                        </button>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                        <div class="space-y-4">
+                                                            <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
+                                                                <i data-lucide="layers" class="w-4 h-4 text-brand-primary"></i> Guest Category
+                                                            </h3>
+                                                            <select onchange="document.getElementById('categoryInput').value = this.value; document.getElementById('bookingFilterForm').submit()"
+                                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all text-stone-800 uppercase tracking-tight">
+                                                                <option value="">Filter by Category</option>
+                                                                @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
+                                                                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="space-y-4">
+                                                            <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
+                                                                <i data-lucide="arrow-up-down" class="w-4 h-4 text-brand-primary"></i> Sort Order
+                                                            </h3>
+                                                            <button type="button" 
+                                                                onclick="document.getElementById('sortInput').value = (document.getElementById('sortInput').value == 'asc' ? 'desc' : 'asc'); document.getElementById('bookingFilterForm').submit()"
+                                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold flex items-center justify-between gap-3 hover:bg-stone-100 transition-all text-stone-800 uppercase tracking-tight">
+                                                                <span>{{ request('sort') == 'asc' ? 'Oldest First' : 'Newest First' }}</span>
+                                                                <i data-lucide="chevron-right" class="w-4 h-4 text-stone-300"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
 
                                                 <!-- Custom Range Panel -->
-                                                <div x-show="showCustom" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" class="p-10 bg-slate-50/50 rounded-[2.5rem] border-2 border-slate-50 space-y-8">
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                        <div class="space-y-3">
-                                                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 text-center">Start Time & Date</label>
+                                                <div x-show="showCustom" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" class="p-8 bg-stone-50 rounded-xl border border-stone-200 space-y-6">
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div class="space-y-2">
+                                                            <label class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest block text-center">Start Time & Date</label>
                                                             <input type="text" name="start_date" value="{{ request('start_date') }}" placeholder="Click to select start"
-                                                                class="datetime-picker w-full px-6 py-5 bg-white border-2 border-white rounded-3xl text-[14px] font-bold text-center outline-none focus:ring-8 focus:ring-blue-500/5 transition-all shadow-sm">
+                                                                class="datetime-picker w-full px-5 py-4 bg-white border border-stone-200 rounded-lg text-xs font-bold text-center outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary transition-all">
                                                         </div>
-                                                        <div class="space-y-3">
-                                                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 text-center">End Time & Date</label>
+                                                        <div class="space-y-2">
+                                                            <label class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest block text-center">End Time & Date</label>
                                                             <input type="text" name="end_date" value="{{ request('end_date') }}" placeholder="Click to select end"
-                                                                class="datetime-picker w-full px-6 py-5 bg-white border-2 border-white rounded-3xl text-[14px] font-bold text-center outline-none focus:ring-8 focus:ring-blue-500/5 transition-all shadow-sm">
+                                                                class="datetime-picker w-full px-5 py-4 bg-white border border-stone-200 rounded-lg text-xs font-bold text-center outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary transition-all">
                                                         </div>
                                                     </div>
                                                     <button type="button" 
                                                         @click="document.getElementById('periodInput').value = 'custom'; document.getElementById('bookingFilterForm').submit()"
-                                                        class="w-full py-5 bg-blue-600 text-white rounded-3xl text-sm font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-[0_15px_40px_-10px_rgba(37,99,235,0.3)]">
-                                                        Apply Custom Time Range
+                                                        class="w-full py-4 bg-brand-primary text-white rounded-lg text-xs font-extrabold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg">
+                                                        Apply Custom Range
                                                     </button>
                                                 </div>
                                             </div>
@@ -581,7 +570,7 @@
                         </div>
 
                         <button type="button" onclick="exportToExcel()"
-                            class="px-6 py-4 bg-emerald-50 text-emerald-700 rounded-2xl text-[13px] font-bold flex items-center gap-2.5 border border-emerald-100 hover:bg-emerald-100 transition-all">
+                            class="px-5 py-3 bg-white text-emerald-700 rounded-lg text-[11px] font-bold flex items-center gap-2.5 border border-emerald-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all uppercase tracking-wider">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             <span>Export</span>
                         </button>
@@ -592,18 +581,17 @@
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
-                        <tr
-                            class="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] border-b border-slate-50">
-                            <th class="pb-5 px-4 w-12 text-left text-slate-400 font-black uppercase tracking-widest">#</th>
-                            <th class="pb-5 px-4 text-left">Guest Name</th>
-                            <th class="pb-5 px-4 text-left text-nowrap">Category</th>
-                            <th class="pb-5 px-4 text-left text-nowrap">Table Number</th>
-                            <th class="pb-5 px-4 text-left">Total Guest</th>
-                            <th class="pb-5 px-4 text-left">Check In</th>
-                            <th class="pb-5 px-4 text-left">Check Out</th>
-                            <th class="pb-5 px-4 text-left">Contact Number</th>
-                            <th class="pb-5 px-4 text-right">Amount</th>
-                            <th class="pb-5 px-4 text-right">Status</th>
+                        <tr class="text-stone-400 text-[10px] font-extrabold uppercase tracking-[0.2em] border-b border-stone-200">
+                            <th class="pb-4 px-4 w-12 text-left">#</th>
+                            <th class="pb-4 px-4 text-left">Guest Name</th>
+                            <th class="pb-4 px-4 text-left text-nowrap">Category</th>
+                            <th class="pb-4 px-4 text-left text-nowrap">Table Number</th>
+                            <th class="pb-4 px-4 text-left">Total Guest</th>
+                            <th class="pb-4 px-4 text-left">Check In</th>
+                            <th class="pb-4 px-4 text-left">Check Out</th>
+                            <th class="pb-4 px-4 text-left">Contact Number</th>
+                            <th class="pb-4 px-4 text-right">Amount</th>
+                            <th class="pb-4 px-4 text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -648,13 +636,30 @@
                             </td>
                             <td class="py-6 px-4">
                                 @php
+                                if (!function_exists('getContrast')) {
+                                    function getContrast($hex) {
+                                        if (!$hex || str_contains($hex, 'bg-')) return '';
+                                        if (str_contains($hex, 'gradient')) return 'white';
+                                        $hex = str_replace('#', '', $hex);
+                                        if (strlen($hex) != 6) return 'white';
+                                        $r = hexdec(substr($hex, 0, 2));
+                                        $g = hexdec(substr($hex, 2, 2));
+                                        $b = hexdec(substr($hex, 4, 2));
+                                        $brightness = ($r * 299 + $g * 587 + $b * 114) / 1000;
+                                        return $brightness > 155 ? '#1e293b' : 'white';
+                                    }
+                                }
                                 $cat = strtoupper($booking->category ?? 'REGULER');
                                 $catData = $categoryMap[$cat] ?? null;
-                                $catColor = $catData ? $catData->bg_color . ' ' . $catData->text_color : 'bg-slate-50 text-slate-400';
+                                $isTw = $catData && str_contains($catData->bg_color ?? '', 'bg-');
+                                $catColor = $catData ? ($isTw ? $catData->bg_color . ' ' . $catData->text_color : '') : 'bg-slate-50 text-slate-400';
+                                $txtCol = $catData ? getContrast($catData->bg_color) : '';
+                                $catStyle = ($catData && !$isTw) ? "background: {$catData->bg_color}; color: {$txtCol}; text-shadow: 0 1px 1px rgba(0,0,0,0.1)" : "";
                                 $catIcon  = $catData?->icon ?? 'tag';
                                 @endphp
                                 <span
-                                    class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                    class="px-3 py-1.5 {{ $catColor }} rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1"
+                                    style="{{ $catStyle }}">
                                     <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
                                     {{ $cat }}
                                 </span>
@@ -712,44 +717,37 @@
                 </table>
 
                 {{-- Totals Summary Row --}}
-                <div class="mx-4 mb-2 mt-1 p-2 sm:p-4 md:p-6 bg-slate-50/50 rounded-3xl border border-slate-100/50 backdrop-blur-sm">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-center">
-                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                <div class="mx-0 mt-4 p-4 md:p-6 bg-stone-50 border-t border-stone-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-stone-200 group">
+                            <div class="w-10 h-10 bg-stone-50 rounded flex items-center justify-center text-stone-400 group-hover:text-brand-primary transition-colors">
                                 <i data-lucide="hash" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total Bookings</p>
-                                <p class="text-base font-black text-slate-800 tracking-tight">{{ number_format($listTotals['count']) }}</p>
+                                <p class="text-[9px] text-stone-500 font-extrabold uppercase tracking-widest leading-none mb-1">Total Bookings</p>
+                                <p class="text-base font-extrabold text-stone-900 tracking-tight">{{ number_format($listTotals['count']) }}</p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-400">
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-stone-200 group">
+                            <div class="w-10 h-10 bg-stone-50 rounded flex items-center justify-center text-stone-400 group-hover:text-brand-primary transition-colors">
                                 <i data-lucide="user-check" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total PAX</p>
-                                <p class="text-base font-black text-indigo-600 tracking-tight">{{ number_format($listTotals['guests']) }}</p>
+                                <p class="text-[9px] text-stone-500 font-extrabold uppercase tracking-widest leading-none mb-1">Total PAX</p>
+                                <p class="text-base font-extrabold text-stone-900 tracking-tight">{{ number_format($listTotals['guests']) }}</p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-400">
+                        <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-stone-200 group">
+                            <div class="w-10 h-10 bg-brand-light rounded flex items-center justify-center text-brand-primary">
                                 <i data-lucide="banknote" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] leading-none mb-1">Total Amount</p>
-                                <p class="text-base font-black text-emerald-600 tracking-tight">Rp {{ number_format($listTotals['amount'], 0, ',', '.') }}</p>
+                                <p class="text-[9px] text-brand-primary font-extrabold uppercase tracking-widest leading-none mb-1">Total Amount</p>
+                                <p class="text-base font-extrabold text-stone-900 tracking-tight">Rp {{ number_format($listTotals['amount'], 0, ',', '.') }}</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="mt-4 px-4 flex justify-between items-center sm:hidden xl:flex">
-                        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5 px-3 py-1 bg-white/50 rounded-lg">
-                            <i data-lucide="info" class="w-3 h-3 text-slate-300"></i>
-                            * Event dengan nama & waktu yang sama dihitung 1x
-                        </span>
-                        <span class="text-[9px] text-indigo-400/50 font-black px-3 py-1 border border-indigo-100/50 rounded-lg bg-indigo-50/20">SUMMARY VIEW</span>
                     </div>
                 </div>
 
@@ -758,16 +756,17 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Add Booking Modal -->
-        <div x-show="showBookingModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+    <!-- Add Booking Modal -->
+    <div x-show="showBookingModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showBookingModal" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity"
                     @click="showBookingModal = false; resetForm()">
-                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                    <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"></div>
                 </div>
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
@@ -778,7 +777,7 @@
                     x-transition:leave="ease-in duration-200"
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl border border-stone-200 transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                     <div class="bg-white p-10" x-data="{ 
                         customerSearch: '', 
                         searchResults: [], 
@@ -828,13 +827,12 @@
                     }" x-init="allCustomers = {{ Js::from($customers) }}">
                         <div class="flex justify-between items-center mb-10">
                             <div>
-                                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Create New Booking</h3>
-                                <p class="text-sm text-slate-400 font-medium mt-1">Fill in the details for the
-                                    reservation</p>
+                                <h3 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Create New Booking</h3>
+                                <p class="text-xs text-stone-500 font-bold mt-1">Fill in the details for the reservation</p>
                             </div>
                             <button @click="showBookingModal = false; resetForm()"
-                                class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                <i data-lucide="x" class="w-6 h-6"></i>
+                                class="w-10 h-10 flex items-center justify-center bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
@@ -844,26 +842,15 @@
                                 <!-- Guest Name -->
                                 <div class="md:col-span-2 relative">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">
+                                        class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex justify-between items-center">
                                         <span>Guest Name</span>
-                                        <template x-if="selectedCustomer">
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
-                                                :class="{
-                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.name?.toLowerCase() === 'gold',
-                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.name?.toLowerCase() === 'silver',
-                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.name?.toLowerCase() === 'bronze',
-                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.name?.toLowerCase() === 'reguler'
-                                                }"
-                                                x-text="selectedCustomer.master_level?.name">
-                                            </span>
-                                        </template>
                                     </label>
                                     <div class="relative">
-                                        <input type="text" name="customer_name" required placeholder="Search name or phone..."
+                                        <input type="text" name="customer_name" required placeholder="SEARCH NAME OR PHONE..."
                                             x-model="customerSearch"
                                             @input.debounce.200ms="filterCustomers(); clearCustomer()"
                                             autocomplete="off"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                            class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider placeholder:text-stone-300">
                                         
                                         <!-- Search Results Dropdown -->
                                         <div x-show="searchResults.length > 0" 
@@ -907,10 +894,9 @@
                                 <!-- Area Selection -->
                                 <div x-data="{ localArea: '' }">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Select
-                                        Area</label>
+                                        class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Select Area</label>
                                     <select x-model="localArea"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer uppercase tracking-tight">
                                         <option value="">All Areas</option>
                                         @foreach($floors as $floor)
                                         <option value="{{ $floor }}">{{ str_replace('_', ' ', strtoupper($floor)) }}
@@ -918,89 +904,87 @@
                                         @endforeach
                                     </select>
 
-                                    <div class="mt-6">
-                                        <label
-                                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Table</label>
-                                        <select name="table_id" required x-model="selectedTableId"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
-                                            <option value="">Select Table</option>
-                                            @foreach($allTables as $table)
-                                            <template x-if="localArea === '' || localArea === '{{ $table->area_id }}'">
-                                                <option value="{{ $table->id }}">{{ $table->code }}</option>
+                                        <div class="mt-6">
+                                            <label
+                                                class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Table</label>
+                                            <select name="table_id" required x-model="selectedTableId"
+                                                class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer uppercase tracking-tight">
+                                                <option value="">Select Table</option>
+                                                @foreach($allTables as $table)
+                                                <template x-if="localArea === '' || localArea === '{{ $table->area_id }}'">
+                                                    <option value="{{ $table->id }}">{{ $table->code }}</option>
+                                                </template>
+                                                @endforeach
+                                            </select>
+
+                                            <!-- Table Details (Min Spend & Capacity) -->
+                                            <template x-if="selectedTable">
+                                                <div class="mt-4 flex gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <div class="flex-1 p-3 bg-brand-light rounded-lg border border-brand-soft/30">
+                                                        <p class="text-[8px] font-extrabold text-brand-primary uppercase tracking-widest mb-1">Min. Spending</p>
+                                                        <p class="text-xs font-extrabold text-stone-900" x-text="'Rp ' + (selectedTable.min_spending || 0).toLocaleString('id-ID')"></p>
+                                                    </div>
+                                                    <div class="flex-1 p-3 bg-stone-50 rounded-lg border border-stone-200">
+                                                        <p class="text-[8px] font-extrabold text-stone-400 uppercase tracking-widest mb-1">Max Capacity</p>
+                                                        <p class="text-xs font-extrabold text-stone-900" x-text="(selectedTable.capacity || 0) + ' PAX'"></p>
+                                                    </div>
+                                                </div>
                                             </template>
-                                            @endforeach
-                                        </select>
-
-                                        <!-- Table Details (Min Spend & Capacity) -->
-                                        <template x-if="selectedTable">
-                                            <div class="mt-4 flex gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <div class="flex-1 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                                                    <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Min. Spending</p>
-                                                    <p class="text-sm font-black text-indigo-600" x-text="'Rp ' + (selectedTable.min_spending || 0).toLocaleString('id-ID')"></p>
-                                                </div>
-                                                <div class="flex-1 p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50">
-                                                    <p class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">Max Capacity</p>
-                                                    <p class="text-sm font-black text-amber-600" x-text="(selectedTable.capacity || 0) + ' PAX'"></p>
-                                                </div>
-                                            </div>
-                                        </template>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- Category Selection -->
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
-                                    <select name="customer_category" required x-ref="categorySelect"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
-                                        <option value="REGULAR">REGULAR</option>
-                                        <option value="PRIORITY">PRIORITY</option>
-                                        <option value="EVENT">EVENT</option>
-                                        <option value="BIG SPENDER">BIG SPENDER</option>
-                                        <option value="DRINKER">DRINKER</option>
-                                        <option value="PARTY">PARTY</option>
-                                        <option value="DINNER">DINNER</option>
-                                        <option value="LUNCH">LUNCH</option>
-                                        <option value="FAMILY">FAMILY</option>
-                                        <option value="YOUNGSTER">YOUNGSTER</option>
-                                    </select>
-                                </div>
-
-                                <!-- Pax -->
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Total
-                                        Guests (PAX)</label>
-                                    <input type="number" name="pax" required min="1" placeholder="0"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
-                                </div>
-
-                                <!-- Phone -->
-                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Category Selection -->
                                     <div>
                                         <label
-                                            class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact
-                                            Number</label>
-                                        <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                            class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Category</label>
+                                        <select name="customer_category" required x-ref="categorySelect"
+                                            class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer uppercase tracking-tight">
+                                            <option value="REGULAR">REGULAR</option>
+                                            <option value="PRIORITY">PRIORITY</option>
+                                            <option value="EVENT">EVENT</option>
+                                            <option value="BIG SPENDER">BIG SPENDER</option>
+                                            <option value="DRINKER">DRINKER</option>
+                                            <option value="PARTY">PARTY</option>
+                                            <option value="DINNER">DINNER</option>
+                                            <option value="LUNCH">LUNCH</option>
+                                            <option value="FAMILY">FAMILY</option>
+                                            <option value="YOUNGSTER">YOUNGSTER</option>
+                                        </select>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2">
+
+                                    <!-- Pax -->
+                                    <div>
+                                        <label
+                                            class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Total Guests (PAX)</label>
+                                        <input type="number" name="pax" required min="1" placeholder="0"
+                                            class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
+                                    </div>
+
+                                    <!-- Phone -->
+                                    <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                            <input type="number" name="age" placeholder="Age" x-ref="ageInput"
-                                                class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                            <label
+                                                class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Contact Number</label>
+                                            <input type="text" name="phone" placeholder="Enter phone number" x-ref="phoneInput"
+                                                class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
-                                            <select name="gender" x-ref="genderSelect"
-                                                class="w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer">
-                                                <option value="">N/A</option>
-                                                <option value="MALE">MALE</option>
-                                                <option value="FEMALE">FEMALE</option>
-                                            </select>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Age</label>
+                                                <input type="number" name="age" placeholder="Age" x-ref="ageInput"
+                                                    class="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Gender</label>
+                                                <select name="gender" x-ref="genderSelect"
+                                                    class="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer uppercase tracking-tight">
+                                                    <option value="">N/A</option>
+                                                    <option value="MALE">MALE</option>
+                                                    <option value="FEMALE">FEMALE</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
                                 <!-- Check In -->
                                 <div class="relative group">
@@ -1014,34 +998,29 @@
 
                                 <!-- Check Out -->
                                 <div class="relative group">
-                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 ml-1">Check Out Time</label>
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5 ml-1">Check Out Time</label>
                                     <div class="relative">
-                                        <i data-lucide="clock" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10"></i>
-                                        <input type="text" name="end_time" required placeholder="Select check-out time"
-                                            class="datetime-picker w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-[1.25rem] text-sm font-bold text-slate-700 focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none">
+                                        <i data-lucide="clock" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-brand-primary transition-colors z-10"></i>
+                                        <input type="text" name="end_time" required placeholder="SELECT CHECK-OUT TIME"
+                                            class="datetime-picker w-full pl-12 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-800 focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 transition-all outline-none uppercase tracking-wider placeholder:text-stone-300">
                                     </div>
                                 </div>
 
                                 <!-- Tags Section -->
                                 @foreach($tags as $group => $groupTags)
-                                <div class="md:col-span-2 mt-6 pt-6 border-t border-slate-50">
+                                <div class="md:col-span-2 mt-6 pt-6 border-t border-stone-100">
                                     <div class="flex items-center gap-2 mb-4">
-                                        <div class="w-1.5 h-4 bg-blue-500 rounded-full"></div>
-                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select {{ $group }}</label>
+                                        <div class="w-1.5 h-3.5 bg-brand-primary rounded-full"></div>
+                                        <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">Select {{ $group }}</label>
                                     </div>
-                                    <div class="flex flex-wrap gap-2.5">
+                                    <div class="flex flex-wrap gap-2">
                                         @foreach($groupTags as $tag)
                                             <label class="relative cursor-pointer group">
                                                 <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" class="hidden peer">
-                                                <div class="px-5 py-3 rounded-2xl border-2 border-slate-50 bg-white text-[12px] font-bold text-slate-500 
-                                                            peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 peer-checked:shadow-[0_8px_20px_rgba(37,99,235,0.2)]
-                                                            hover:border-blue-200 hover:bg-slate-50 transition-all duration-300">
-                                                    <div class="flex items-center gap-2">
-                                                        <span x-show="false" class="peer-checked:block">
-                                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                                        </span>
-                                                        {{ $tag->name }}
-                                                    </div>
+                                                <div class="px-4 py-2 rounded-lg border border-stone-200 bg-white text-[10px] font-extrabold text-stone-500 
+                                                            peer-checked:bg-brand-primary peer-checked:text-white peer-checked:border-brand-primary
+                                                            hover:border-brand-soft hover:bg-stone-50 transition-all duration-200 uppercase tracking-wider">
+                                                    {{ $tag->name }}
                                                 </div>
                                             </label>
                                         @endforeach
@@ -1052,16 +1031,15 @@
                                 <!-- Notes -->
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Notes
-                                        (Optional)</label>
-                                    <textarea name="notes" rows="3" placeholder="Add any special requests..."
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all resize-none"></textarea>
+                                        class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">Notes (Optional)</label>
+                                    <textarea name="notes" rows="3" placeholder="ADD ANY SPECIAL REQUESTS..."
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-800 focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 transition-all outline-none uppercase tracking-wider placeholder:text-stone-300 resize-none"></textarea>
                                 </div>
                             </div>
 
                             <div class="pt-6">
                                 <button type="submit"
-                                    class="w-full py-5 bg-[#e85a2f] text-white rounded-2xl text-base font-black flex items-center justify-center gap-3 shadow-[0_12px_30px_rgba(232,90,47,0.3)] hover:bg-[#d04a25] transition-all hover:-translate-y-1 active:translate-y-0">
+                                    class="w-full py-4 bg-brand-primary text-white rounded-lg text-sm font-extrabold flex items-center justify-center gap-3 shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
                                     Create Booking
                                 </button>
                             </div>
@@ -1079,7 +1057,7 @@
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity"
                     @click="showEventModal = false; resetForm()">
-                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                    <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"></div>
                 </div>
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
@@ -1090,12 +1068,16 @@
                     x-transition:leave="ease-in duration-200"
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-white p-10" x-data="{ 
+                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl border border-stone-200 transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    <div class="bg-white p-8" x-data="{ 
                         customerSearch: '', 
                         searchResults: [], 
                         selectedCustomer: null,
                         allCustomers: [],
+                        activeBookings: [],
+                        lockedTableIds: [],
+                        eventStartTime: '',
+                        eventEndTime: '',
                         
                         filterCustomers() {
                             if (this.customerSearch.length < 2) {
@@ -1124,22 +1106,50 @@
                             }
                         },
 
+                        checkAvailability() {
+                            if (!this.eventStartTime || !this.eventEndTime) {
+                                this.lockedTableIds = [];
+                                return;
+                            }
+                            const start = new Date(this.eventStartTime).getTime();
+                            const end = new Date(this.eventEndTime).getTime();
+                            const locked = new Set();
+                            
+                            this.activeBookings.forEach(b => {
+                                const bStart = new Date(b.start_time).getTime();
+                                const bEnd = new Date(b.end_time).getTime();
+                                if (bStart < end && bEnd > start) {
+                                    locked.add(b.table_id);
+                                }
+                            });
+                            this.lockedTableIds = Array.from(locked);
+                        },
+
                         resetForm() {
                             this.customerSearch = '';
                             this.searchResults = [];
                             this.selectedCustomer = null;
-                            if (this.$refs.eventForm) this.$refs.eventForm.reset();
+                            this.eventStartTime = '';
+                            this.eventEndTime = '';
+                            this.lockedTableIds = [];
+                            if (this.$refs.eventForm) {
+                                this.$refs.eventForm.reset();
+                                // if flatpickr inputs need manual clear:
+                                const fpStart = this.$refs.eventForm.querySelector('input[name=\'start_time\']');
+                                const fpEnd = this.$refs.eventForm.querySelector('input[name=\'end_time\']');
+                                if (fpStart && fpStart._flatpickr) fpStart._flatpickr.clear();
+                                if (fpEnd && fpEnd._flatpickr) fpEnd._flatpickr.clear();
+                            }
                         }
-                    }" x-init="allCustomers = {{ Js::from($customers) }}">
+                    }" x-init="allCustomers = {{ Js::from($customers) }}; activeBookings = {{ Js::from($allActiveBookings) }}">
                         <div class="flex justify-between items-center mb-10">
                             <div>
-                                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Create Event Booking</h3>
-                                <p class="text-sm text-slate-400 font-medium mt-1">Select multiple tables for your event
-                                </p>
+                                <h3 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Create Event Booking</h3>
+                                <p class="text-xs text-stone-500 font-bold mt-1">Select multiple tables for your event</p>
                             </div>
                             <button @click="showEventModal = false; resetForm()"
-                                class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                <i data-lucide="x" class="w-6 h-6"></i>
+                                class="w-10 h-10 flex items-center justify-center bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
@@ -1149,26 +1159,15 @@
                                 <!-- Guest Name -->
                                 <div class="md:col-span-2 relative">
                                     <label
-                                        class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">
+                                        class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex justify-between items-center">
                                         <span>Event / Guest Name</span>
-                                        <template x-if="selectedCustomer">
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
-                                                :class="{
-                                                    'bg-amber-100 text-amber-600': selectedCustomer.master_level?.name?.toLowerCase() === 'gold',
-                                                    'bg-slate-100 text-slate-600': selectedCustomer.master_level?.name?.toLowerCase() === 'silver',
-                                                    'bg-orange-100 text-orange-600': selectedCustomer.master_level?.name?.toLowerCase() === 'bronze',
-                                                    'bg-blue-100 text-blue-600': selectedCustomer.master_level?.name?.toLowerCase() === 'reguler'
-                                                }"
-                                                x-text="selectedCustomer.master_level?.name">
-                                            </span>
-                                        </template>
                                     </label>
                                     <div class="relative">
-                                        <input type="text" name="customer_name" required placeholder="Search name or phone..."
+                                        <input type="text" name="customer_name" required placeholder="SEARCH NAME OR PHONE..."
                                             x-model="customerSearch"
                                             @input.debounce.200ms="filterCustomers(); clearCustomer()"
                                             autocomplete="off"
-                                            class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                            class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider placeholder:text-stone-300">
                                         
                                         <!-- Search Results Dropdown -->
                                         <div x-show="searchResults.length > 0" 
@@ -1211,17 +1210,13 @@
 
                                 <!-- Table Selection (Multi) with Area Filter -->
                                 <div class="md:col-span-2" x-data="{ eventArea: '' }">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <label
-                                            class="block text-xs font-black text-slate-400 uppercase tracking-widest">Select
-                                            Area</label>
-                                        <label
-                                            class="block text-xs font-black text-emerald-600 uppercase tracking-widest">Select
-                                            Multiple Tables</label>
+                                    <div class="flex justify-between items-center mb-3 text-[10px] font-extrabold uppercase tracking-widest">
+                                        <label class="text-stone-400">Select Area</label>
+                                        <label class="text-brand-primary">Select Multiple Tables</label>
                                     </div>
 
                                     <select x-model="eventArea"
-                                        class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer mb-6">
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all cursor-pointer mb-6 uppercase tracking-tight">
                                         <option value="">All Areas</option>
                                         @foreach($floors as $floor)
                                         <option value="{{ $floor }}">{{ str_replace('_', ' ', strtoupper($floor)) }}
@@ -1230,16 +1225,18 @@
                                     </select>
 
                                     <div
-                                        class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-48 overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-48 overflow-y-auto p-4 bg-stone-50 rounded-xl border border-stone-200">
                                         @foreach($allTables as $table)
                                         <label x-show="eventArea === '' || eventArea === '{{ $table->area_id }}'"
-                                            class="relative flex items-center justify-center aspect-square rounded-xl border-2 border-slate-200 cursor-pointer overflow-hidden group transition-all hover:border-blue-400 has-[:checked]:bg-blue-600 has-[:checked]:border-blue-600 has-[:checked]:text-white">
+                                            class="relative flex items-center justify-center aspect-square rounded-lg border-2 border-stone-200 overflow-hidden group transition-all"
+                                            :class="lockedTableIds.includes({{ $table->id }}) ? 'opacity-50 cursor-not-allowed bg-stone-100' : 'cursor-pointer hover:border-brand-soft has-[:checked]:bg-brand-primary has-[:checked]:border-brand-primary has-[:checked]:text-white'">
                                             <input type="checkbox" name="table_ids[]" value="{{ $table->id }}"
-                                                class="hidden peer">
-                                            <span class="text-xs font-black">{{ $table->code }}</span>
+                                                class="hidden peer"
+                                                :disabled="lockedTableIds.includes({{ $table->id }})">
+                                            <span class="text-xs font-extrabold uppercase tracking-widest">{{ $table->code }}</span>
                                             <div
                                                 class="absolute top-1 right-1 opacity-0 group-has-[:checked]:opacity-100 transition-opacity">
-                                                <i data-lucide="check-circle-2" class="w-3 h-3 text-white"></i>
+                                                <i data-lucide="check-circle" class="w-3 h-3 text-white"></i>
                                             </div>
                                         </label>
                                         @endforeach
@@ -1288,6 +1285,7 @@
                                         class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Event
                                         Start</label>
                                     <input type="text" name="start_time" required placeholder="Select event start"
+                                        x-model="eventStartTime" @input="checkAvailability()" @change="checkAvailability()"
                                         class="datetime-picker w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                 </div>
 
@@ -1297,6 +1295,7 @@
                                         class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Event
                                         End</label>
                                     <input type="text" name="end_time" required placeholder="Select event end"
+                                        x-model="eventEndTime" @input="checkAvailability()" @change="checkAvailability()"
                                         class="datetime-picker w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
                                 </div>
 
@@ -1355,7 +1354,7 @@
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity"
                     @click="showInfoModal = false; selectedBooking = null">
-                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                    <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"></div>
                 </div>
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
@@ -1366,16 +1365,16 @@
                     x-transition:leave="ease-in duration-200"
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white p-10">
+                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl border border-stone-200 transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white p-8">
                         <div class="flex justify-between items-center mb-8">
                             <div>
-                                <h3 class="text-2xl font-black text-slate-800 tracking-tight">Booking Details</h3>
-                                <p class="text-sm text-slate-400 font-medium mt-1">Current reservation information</p>
+                                <h3 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Booking Details</h3>
+                                <p class="text-xs text-stone-500 font-bold mt-1">Current reservation information</p>
                             </div>
                             <button @click="showInfoModal = false; selectedBooking = null"
-                                class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                <i data-lucide="x" class="w-6 h-6"></i>
+                                class="w-10 h-10 flex items-center justify-center bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg transition-colors">
+                                <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
@@ -1385,81 +1384,72 @@
                         </div>
                         <template x-if="selectedBooking">
                             <div class="bg-white p-10">
-                                <div class="flex justify-between items-center mb-10">
+                                <div class="flex justify-between items-center mb-8">
                                     <div>
-                                        <h3 class="text-2xl font-black text-slate-800 tracking-tight" x-text="'Table ' + selectedBooking.table_model?.code"></h3>
-                                        <p class="text-sm text-slate-400 font-medium mt-1">Reservation Details</p>
+                                        <h3 class="text-lg font-extrabold text-stone-900 tracking-tight uppercase" x-text="'Table ' + selectedBooking.table_model?.code"></h3>
+                                        <p class="text-xs text-stone-500 font-bold mt-1">RESERVATION DETAILS</p>
                                     </div>
-                                    <button @click="showInfoModal = false; selectedBooking = null"
-                                        class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                        <i data-lucide="x" class="w-6 h-6"></i>
-                                    </button>
                                 </div>
 
-                                <div class="space-y-8">
-                                    <div class="flex items-center gap-6">
-                                        <div class="w-16 h-16 rounded-[1.5rem] bg-indigo-50 border-4 border-white shadow-xl shadow-indigo-100 flex items-center justify-center text-indigo-600 font-black text-2xl"
+                                <div class="space-y-6">
+                                    <div class="flex items-center gap-5 p-4 bg-stone-50 rounded-xl border border-stone-100">
+                                        <div class="w-14 h-14 rounded-lg bg-brand-primary flex items-center justify-center text-white font-black text-xl"
                                             :class="{
-                                                'bg-amber-50 text-amber-500 shadow-amber-100': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'gold',
-                                                'bg-slate-100 text-slate-500 shadow-slate-200': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'silver',
-                                                'bg-orange-50 text-orange-600 shadow-orange-100': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'bronze'
+                                                'bg-[#A68A56]': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'gold',
+                                                'bg-stone-400': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'silver',
+                                                'bg-[#9F7549]': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'bronze'
                                             }">
                                             <span x-text="selectedBooking.customer?.name?.substring(0,1).toUpperCase() || '?'"></span>
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-3">
-                                                <h4 class="text-xl font-black text-slate-800" x-text="selectedBooking.customer?.name"></h4>
-                                                <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-wider"
-                                                    :class="{
-                                                        'bg-amber-100 text-amber-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'gold',
-                                                        'bg-slate-100 text-slate-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'silver',
-                                                        'bg-orange-100 text-orange-600': selectedBooking.customer?.master_level?.name?.toLowerCase() === 'bronze'
-                                                    }"
+                                                <h4 class="text-base font-extrabold text-stone-900 uppercase tracking-tight" x-text="selectedBooking.customer?.name"></h4>
+                                                <span class="px-2 py-0.5 bg-brand-light text-brand-primary rounded text-[9px] font-extrabold uppercase tracking-widest"
                                                     x-text="selectedBooking.customer?.master_level?.name || 'REGULER'"></span>
                                             </div>
-                                            <p class="text-sm font-bold text-slate-400 mt-1" x-text="selectedBooking.customer?.phone || 'No phone number'"></p>
+                                            <p class="text-xs font-bold text-stone-500 mt-1" x-text="selectedBooking.customer?.phone || 'No phone number'"></p>
                                         </div>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
-                                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check In</label>
-                                            <p class="text-sm font-black text-slate-700" x-text="selectedBooking.start_time ? new Date(selectedBooking.start_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                        <div class="p-4 bg-stone-50 rounded-lg border border-stone-100">
+                                            <label class="block text-[9px] font-extrabold text-stone-400 uppercase tracking-widest mb-1.5">Check In</label>
+                                            <p class="text-xs font-extrabold text-stone-800" x-text="selectedBooking.start_time ? new Date(selectedBooking.start_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
                                         </div>
-                                        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100/50">
-                                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Check Out</label>
-                                            <p class="text-sm font-black text-slate-700" x-text="selectedBooking.end_time ? new Date(selectedBooking.end_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                        <div class="p-4 bg-stone-50 rounded-lg border border-stone-100">
+                                            <label class="block text-[9px] font-extrabold text-stone-400 uppercase tracking-widest mb-1.5">Check Out</label>
+                                            <p class="text-xs font-extrabold text-stone-800" x-text="selectedBooking.end_time ? new Date(selectedBooking.end_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
                                         </div>
                                     </div>
 
-                                    <div class="p-6 bg-slate-50 rounded-[2rem] border border-slate-100/50">
-                                        <div class="grid grid-cols-2 gap-6">
+                                    <div class="p-4 bg-stone-50 rounded-lg border border-stone-100">
+                                        <div class="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Status</label>
+                                                <label class="block text-[9px] font-extrabold text-stone-400 uppercase tracking-widest mb-1.5">Status</label>
                                                 <div class="flex items-center gap-2">
-                                                    <div class="w-2.5 h-2.5 rounded-full" :class="{
-                                                        'bg-amber-400': selectedBooking.status === 'confirmed',
-                                                        'bg-blue-400': selectedBooking.status === 'pending',
-                                                        'bg-emerald-400': ['occupied', 'arrived'].includes(selectedBooking.status),
-                                                        'bg-slate-400': selectedBooking.status === 'cancelled'
+                                                    <div class="w-2 h-2 rounded-full" :class="{
+                                                        'bg-amber-500': selectedBooking.status === 'confirmed',
+                                                        'bg-stone-400': selectedBooking.status === 'pending',
+                                                        'bg-emerald-500': ['occupied', 'arrived'].includes(selectedBooking.status),
+                                                        'bg-red-500': selectedBooking.status === 'cancelled'
                                                     }"></div>
-                                                    <span class="text-sm font-black text-slate-700 uppercase" x-text="selectedBooking.status"></span>
+                                                    <span class="text-xs font-extrabold text-stone-800 uppercase" x-text="selectedBooking.status"></span>
                                                 </div>
                                             </div>
                                             <div>
-                                                <label class="block text-[10px] font-black text-slate-400 capitalize mb-1">Total Guests</label>
-                                                <p class="text-base font-black text-slate-700" x-text="selectedBooking.pax + ' PAX'"></p>
+                                                <label class="block text-[9px] font-extrabold text-stone-400 uppercase tracking-widest mb-1.5">Total Guests</label>
+                                                <p class="text-xs font-extrabold text-stone-800" x-text="selectedBooking.pax + ' PAX'"></p>
                                             </div>
                                         </div>
                                     </div>
 
-                                     <div class="flex gap-4 pt-4">
+                                     <div class="flex gap-3 pt-4">
                                         <button x-show="selectedBooking.status !== 'hold'" @click="showInfoModal = false; showEditBookingModal = true; editBookingData = JSON.parse(JSON.stringify(selectedBooking))"
-                                                class="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-base font-black hover:bg-blue-700 transition-all active:scale-95 leading-none shadow-lg shadow-blue-200">
+                                                class="flex-1 py-3.5 bg-brand-primary text-white rounded-lg text-xs font-extrabold uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                                             Edit Booking
                                         </button>
                                         <button @click="showInfoModal = false; selectedBooking = null"
-                                                class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-base font-black hover:bg-slate-200 transition-all active:scale-95 leading-none">
+                                                class="flex-1 py-3.5 bg-stone-200 text-stone-700 rounded-lg text-xs font-extrabold uppercase tracking-widest hover:bg-stone-300 transition-all">
                                             Close
                                         </button>
                                     </div>
@@ -1474,35 +1464,37 @@
         <div x-show="showEditBookingModal" class="fixed inset-0 z-[110] overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showEditBookingModal" @click="showEditBookingModal = false" class="fixed inset-0 transition-opacity">
-                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                    <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"></div>
                 </div>
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
 
                 <template x-if="showEditBookingModal">
-                    <div class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                        <form :action="'/bookings/' + editBookingData.id" method="POST" class="p-10">
+                    <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl border border-stone-200 transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                        <form :action="'/bookings/' + editBookingData.id" method="POST" class="p-8">
                             @csrf
                             @method('PUT')
-                            <div class="flex justify-between items-center mb-10">
+                            <div class="flex justify-between items-center mb-8">
                                 <div>
-                                    <h3 class="text-2xl font-black text-slate-800 tracking-tight">Edit Booking</h3>
-                                    <p class="text-sm text-slate-400 font-medium mt-1">Update reservation details</p>
+                                    <h3 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Edit Booking</h3>
+                                    <p class="text-xs text-stone-500 font-bold mt-1">Update reservation details</p>
                                 </div>
-                                <button type="button" @click="showEditBookingModal = false" class="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-colors">
-                                    <i data-lucide="x" class="w-6 h-6"></i>
+                                <button type="button" @click="showEditBookingModal = false" class="w-10 h-10 flex items-center justify-center bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg transition-colors">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
                                 </button>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="md:col-span-2">
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Guest Name</label>
-                                    <input type="text" name="customer_name" x-model="editBookingData.customer.name" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Guest Name</label>
+                                    <input type="text" name="customer_name" x-model="editBookingData.customer.name" required 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
-                                    <select name="customer_category" x-model="editBookingData.customer.category" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Category</label>
+                                    <select name="customer_category" x-model="editBookingData.customer.category" required 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-tight">
                                         @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
                                             <option value="{{ $cat }}">{{ $cat }}</option>
                                         @endforeach
@@ -1510,8 +1502,9 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Status</label>
-                                    <select name="status" x-model="editBookingData.status" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Status</label>
+                                    <select name="status" x-model="editBookingData.status" required 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-tight">
                                         @foreach(['PENDING', 'CONFIRMED', 'HOLD', 'ARRIVED', 'OCCUPIED', 'BILLED', 'COMPLETED', 'CANCELLED'] as $st)
                                             <option value="{{ $st }}">{{ $st }}</option>
                                         @endforeach
@@ -1519,18 +1512,21 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Contact Number</label>
-                                    <input type="text" name="phone" x-model="editBookingData.customer.phone" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Contact Number</label>
+                                    <input type="text" name="phone" x-model="editBookingData.customer.phone" 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Age</label>
-                                        <input type="number" name="age" x-model="editBookingData.customer.age" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                        <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Age</label>
+                                        <input type="number" name="age" x-model="editBookingData.customer.age" 
+                                            class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Gender</label>
-                                        <select name="gender" x-model="editBookingData.customer.gender" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                        <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Gender</label>
+                                        <select name="gender" x-model="editBookingData.customer.gender" 
+                                            class="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-tight">
                                             <option value="">Not Set</option>
                                             <option value="MALE">Laki-laki</option>
                                             <option value="FEMALE">Perempuan</option>
@@ -1539,32 +1535,33 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check In</label>
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Check In</label>
                                     <input type="text" name="start_time" required x-model="editBookingData.start_time"
-                                        class="datetime-picker w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        class="datetime-picker w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Check Out</label>
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Check Out</label>
                                     <input type="text" name="end_time" required x-model="editBookingData.end_time"
-                                        class="datetime-picker w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all">
+                                        class="datetime-picker w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">PAX</label>
-                                    <input type="number" name="pax" x-model="editBookingData.pax" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">PAX</label>
+                                    <input type="number" name="pax" x-model="editBookingData.pax" required 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-wider">
                                 </div>
 
                                 <!-- Tags Section -->
                                 @foreach($tags as $group => $groupTags)
-                                <div class="md:col-span-2 border-t border-slate-100 pt-6">
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Edit {{ $group }}</label>
+                                <div class="md:col-span-2 border-t border-stone-100 pt-6">
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-4">Edit {{ $group }}</label>
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($groupTags as $tag)
                                             <label class="cursor-pointer group">
                                                 <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" 
                                                        :checked="(editBookingData.tags || []).some(t => t.id == {{ $tag->id }})"
                                                        class="hidden peer">
-                                                <div class="px-4 py-2 rounded-2xl border border-slate-100 bg-slate-50 text-[11px] font-black text-slate-500 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 transition-all shadow-sm group-hover:bg-slate-100">
+                                                <div class="px-4 py-2 rounded-lg border border-stone-200 bg-white text-[10px] font-extrabold text-stone-500 peer-checked:bg-brand-primary peer-checked:text-white peer-checked:border-brand-primary transition-all uppercase tracking-widest">
                                                     {{ $tag->name }}
                                                 </div>
                                             </label>
@@ -1574,13 +1571,14 @@
                                 @endforeach
 
                                 <div class="md:col-span-2">
-                                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Notes</label>
-                                    <textarea name="notes" x-model="editBookingData.notes" rows="2" class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold resize-none"></textarea>
+                                    <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Notes</label>
+                                    <textarea name="notes" x-model="editBookingData.notes" rows="2" 
+                                        class="w-full px-5 py-3.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-stone-800 focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 transition-all uppercase tracking-widest placeholder:text-stone-300 resize-none"></textarea>
                                 </div>
                             </div>
 
                             <div class="pt-8">
-                                <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-2xl text-base font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+                                <button type="submit" class="w-full py-4 bg-brand-primary text-white rounded-lg text-sm font-extrabold uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
                                     Save Changes
                                 </button>
                             </div>
@@ -1632,7 +1630,7 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
 <script>
     function exportToExcel() {
         const table = document.getElementById("export-table");
@@ -1656,7 +1654,14 @@
             minuteIncrement: 5,
             allowInput: true,
             disableMobile: "true", // Force custom UI on mobile too
-            static: true // Ensures it stays near the input in modals
+            static: true, // Ensures it stays near the input in modals
+            onChange: function(selectedDates, dateStr, instance) {
+                // Ensure Alpine x-model gets the update by dispatching a native input event
+                if (instance.element) {
+                    instance.element.dispatchEvent(new Event('input', { bubbles: true }));
+                    instance.element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
         });
     });
 </script>

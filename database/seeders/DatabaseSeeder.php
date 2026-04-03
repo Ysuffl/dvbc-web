@@ -15,14 +15,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // FastAPI compatible hashed password for 'admin'
-        // Using $2y$ format which is compatible with both Laravel and Passlib/FastAPI
-        User::create([
-            'username' => 'admin',
-            'hashed_password' => \Illuminate\Support\Facades\Hash::make('admin'),
-            'role' => 'ADMIN',
-            'is_active' => true,
-        ]);
+        // Add Admin User
+        User::firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'hashed_password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
+        );
+
+        // Add Staff User
+        User::firstOrCreate(
+            ['username' => 'staff'],
+            [
+                'hashed_password' => \Illuminate\Support\Facades\Hash::make('staff123'),
+                'role' => 'staff',
+                'is_active' => true,
+            ]
+        );
 
         $this->call(FloorPlanSeeder::class);
     }

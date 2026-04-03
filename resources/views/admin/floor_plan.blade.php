@@ -3,52 +3,55 @@
 @section('content')
 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
     <div>
-        <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
-            <i data-lucide="map" class="w-8 h-8 text-blue-500"></i>
+        <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-3 uppercase tracking-tight">
+            <div class="w-10 h-10 bg-brand-light rounded-lg flex items-center justify-center text-brand-primary">
+                <i data-lucide="map" class="w-5 h-5"></i>
+            </div>
             Floor Plan Editor
         </h1>
-        <p class="text-slate-500 text-sm mt-1">Drag and move tables to arrange the layout for VIP OTIC floor</p>
+        <p class="text-stone-500 text-[10px] font-bold mt-1 uppercase tracking-widest">Drag and move tables to arrange the layout for VIP OTIC floor</p>
     </div>
     <div class="flex items-center gap-4">
         <!-- Status Legend -->
-        <div class="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 text-xs font-bold text-slate-600 uppercase tracking-widest">
+        <div class="bg-white px-4 py-3 rounded-lg border border-stone-200 shadow-sm flex items-center gap-5 text-[10px] font-extrabold text-stone-600 uppercase tracking-widest">
             <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-slate-100 border border-slate-300"></div> Tersedia
+                <div class="w-3 h-3 rounded bg-stone-100 border border-stone-300"></div> Tersedia
             </div>
             <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-blue-100 border border-blue-500"></div> Booked
+                <div class="w-3 h-3 rounded bg-brand-light border border-brand-primary/50"></div> Booked
             </div>
         </div>
         
-        <button id="saveBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30">
-            <i data-lucide="save" class="w-5 h-5"></i>
+        <button id="saveBtn" class="flex items-center gap-2 bg-brand-primary hover:opacity-90 active:scale-95 transition-all text-white font-extrabold py-3 px-8 rounded-lg shadow-lg text-[10px] uppercase tracking-widest">
+            <i data-lucide="save" class="w-4 h-4"></i>
             Save Layout
         </button>
     </div>
 </div>
 
-<div class="relative w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-50 min-h-[850px]" id="canvas-container">
+<div class="relative w-full rounded-xl overflow-hidden border border-stone-200 shadow-xl bg-stone-50 min-h-[850px]" id="canvas-container">
     <!-- Visual Grid Overlay -->
     <div class="absolute inset-0 pointer-events-none opacity-50" 
          style="background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 24px 24px;"></div>
     
     <div class="relative w-full min-h-[850px]" id="canvas">
         @foreach($tables as $table)
-        <div class="draggable absolute flex flex-col items-center justify-center font-black text-slate-800 shadow-xl cursor-grab active:cursor-grabbing select-none group transition-all duration-200 ease-out"
+        <div class="draggable absolute flex flex-col items-center justify-center font-extrabold text-stone-800 shadow-md hover:shadow-xl cursor-grab active:cursor-grabbing select-none group transition-all duration-200 ease-out"
              id="table_{{ $table->id }}"
              data-id="{{ $table->id }}"
              style="left: {{ $table->x_pos }}px; top: {{ $table->y_pos }}px; 
-                    width: {{ $table->shape == 'circle' ? '130px' : '100px' }}; 
-                    height: {{ $table->shape == 'circle' ? '130px' : '100px' }}; 
-                    border-radius: {{ $table->shape == 'circle' ? '50%' : '24px' }}; 
-                    background-color: {{ $table->status == 'available' ? '#f8fafc' : '#dbeafe' }};
-                    border: 4px solid {{ $table->status == 'available' ? '#e2e8f0' : '#3b82f6' }};">
-            <div class="text-xl tracking-tighter">{{ $table->code }}</div>
-            <div class="text-[80%] opacity-40 font-bold uppercase">{{ $table->category }}</div>
+                    width: {{ $table->shape == 'circle' ? '120px' : '90px' }}; 
+                    height: {{ $table->shape == 'circle' ? '120px' : '90px' }}; 
+                    border-radius: {{ $table->shape == 'circle' ? '50%' : '8px' }}; 
+                    background-color: {{ $table->status == 'available' ? '#f5f5f4' : '#FFF8ED' }};
+                    border: 2px solid {{ $table->status == 'available' ? '#e7e5e4' : '#A68A56' }};">
+            <div class="text-[14px] font-extrabold tracking-tight uppercase leading-none {{ $table->status == 'available' ? 'text-stone-800' : 'text-brand-primary' }}">{{ $table->code }}</div>
+            <div class="text-[9px] font-extrabold mt-1 uppercase tracking-widest {{ $table->status == 'available' ? 'text-stone-400' : 'text-brand-primary/70' }}">{{ $table->category }}</div>
             
             <!-- Floating Label for Drag Handle -->
-            <div class="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-slate-800 text-white text-[10px] py-1 px-3 rounded-full pointer-events-none">
+            <div class="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-stone-900 text-white text-[10px] font-extrabold uppercase tracking-widest py-1.5 px-3 rounded-lg pointer-events-none">
                 {{ $table->shape == 'circle' ? 'Large Table' : 'Standard' }}
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 border-[4px] border-transparent border-t-stone-900"></div>
             </div>
         </div>
         @endforeach
@@ -72,7 +75,7 @@
             offsetY = e.clientY - el.getBoundingClientRect().top;
             
             el.style.zIndex = 1000;
-            el.classList.add('rotate-2', 'scale-110', 'opacity-80', 'ring-4', 'ring-blue-500/20');
+            el.classList.add('rotate-2', 'scale-110', 'opacity-80', 'ring-4', 'ring-brand-primary/20');
         });
     });
 
@@ -98,7 +101,7 @@
     document.addEventListener('mouseup', () => {
         if (currentEl) {
             currentEl.style.zIndex = 1;
-            currentEl.classList.remove('rotate-2', 'scale-110', 'opacity-80', 'ring-4', 'ring-blue-500/20');
+            currentEl.classList.remove('rotate-2', 'scale-110', 'opacity-80', 'ring-4', 'ring-brand-primary/20');
         }
         isDragging = false;
         currentEl = null;
@@ -135,12 +138,14 @@
             const data = await res.json();
             
             if (data.status === 'success') {
-                btn.classList.add('bg-green-600');
-                btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> Layout Saved!';
+                btn.classList.add('bg-stone-900', 'text-white');
+                btn.classList.remove('bg-brand-primary');
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Layout Saved!';
                 lucide.createIcons();
                 
                 setTimeout(() => {
-                    btn.classList.remove('bg-green-600');
+                    btn.classList.remove('bg-stone-900');
+                    btn.classList.add('bg-brand-primary');
                     btn.innerHTML = originalHtml;
                     btn.disabled = false;
                     lucide.createIcons();
