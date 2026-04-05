@@ -251,7 +251,7 @@ class AdminDashboardController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_category' => 'required|string',
             'phone' => 'nullable|string',
-            'age' => 'nullable|integer',
+            'age' => 'nullable|string|max:20',
             'gender' => 'nullable|string',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
@@ -261,13 +261,15 @@ class AdminDashboardController extends Controller
             'tag_ids.*' => 'exists:master_tags,id',
         ]);
 
+        \Log::info('New Booking Attempt:', ['data' => $validated]);
+
         $categoryMap = [
             'REGULAR' => 'reguler',
             'PRIORITY' => 'prioritas',
             'BIG SPENDER' => 'big_spender',
         ];
 
-        $dbCategory = $categoryMap[$validated['customer_category']] ?? str_replace(' ', '_', strtolower($validated['customer_category']));
+        $dbCategory = $categoryMap[$validated['customer_category'] ?? ''] ?? str_replace(' ', '_', strtolower($validated['customer_category'] ?? 'reguler'));
 
         // Overlap Check (Ignore Cancelled/Hold and Expired bookings)
         $now = now();
@@ -279,9 +281,9 @@ class AdminDashboardController extends Controller
             ->exists();
 
         if ($overlap) {
-            return redirect()->back()->withErrors(['error' => 'Table is already booked during this time!']);
+            \Log::warning('Booking overlap detected', ['table_id' => $validated['table_id']]);
+            return redirect()->back()->withErrors(['booking' => 'Table is already booked during this time!'])->withInput();
         }
-
 
         $customer = Customer::firstOrCreate(
             ['phone' => $validated['phone'] ?? ''],
@@ -292,31 +294,34 @@ class AdminDashboardController extends Controller
             ]
         );
 
-        // Update profile if changed (No more category)
-        $updates = [];
-        if (isset($validated['age']) && $customer->age !== (int)$validated['age']) {
-            $updates['age'] = (int)$validated['age'];
-        }
-        if (!empty($updates)) {
-            $customer->update($updates);
-        }
-
-        $booking = Booking::create([
-            'table_id' => $validated['table_id'],
-            'customer_id' => $customer->id,
-            'pax' => $validated['pax'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'notes' => $validated['notes'],
-            'status' => 'pending',
-            'category' => $dbCategory
+        // Update profile if changed
+        $customer->update([
+            'age' => $validated['age'] ?? $customer->age,
+            'gender' => $request->gender ?? $customer->gender
         ]);
 
-        if ($request->has('tag_ids')) {
-            $booking->tags()->sync($request->tag_ids);
-        }
+        try {
+            $booking = Booking::create([
+                'table_id' => $validated['table_id'],
+                'customer_id' => $customer->id,
+                'pax' => $validated['pax'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'notes' => $validated['notes'],
+                'status' => 'pending',
+                'category' => $dbCategory
+            ]);
 
-        return redirect()->back()->with('success', 'Booking added successfully');
+            if ($request->has('tag_ids')) {
+                $booking->tags()->sync($request->tag_ids);
+            }
+
+            \Log::info('Booking created successfully', ['id' => $booking->id]);
+            return redirect()->back()->with('success', 'Booking added successfully');
+        } catch (\Exception $e) {
+            \Log::error('Failed to create booking: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['booking' => 'Failed to save booking to database: ' . $e->getMessage()])->withInput();
+        }
     }
 
     public function updateBooking(Request $request, $id)

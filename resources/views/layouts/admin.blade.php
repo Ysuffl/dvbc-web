@@ -188,6 +188,28 @@
                     }
                 });
             @endif
+            @if($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: `<ul class="text-left space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li class="flex items-center gap-2 text-xs font-bold text-stone-600 uppercase">
+                                <div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                {{ $error }}
+                            </li>
+                        @endforeach
+                    </ul>`,
+                    background: '#ffffff',
+                    color: '#2D2D2D',
+                    iconColor: '#ef4444',
+                    customClass: {
+                        popup: 'rounded-md border border-stone-100 shadow-2xl p-8',
+                        confirmButton: 'bg-stone-900 px-8 py-3.5 rounded-md font-black text-xs uppercase tracking-widest text-white hover:bg-black transition-all outline-none'
+                    },
+                    buttonsStyling: false
+                });
+            @endif
 
             // 2. Maintain Sidebar Scroll Position
             const sidebarMenu = document.getElementById('sidebarMenu');

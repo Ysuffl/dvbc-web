@@ -863,9 +863,7 @@
                                         class="w-full px-6 py-5 bg-stone-50 border border-stone-100 rounded-md text-xs font-black focus:ring-4 focus:ring-brand-primary/5 focus:bg-white focus:border-brand-primary/30 transition-all outline-none uppercase tracking-widest appearance-none cursor-pointer">
                                         <option value="">SELECT TABLE</option>
                                         @foreach($allTables as $table)
-                                        <template x-if="localArea === '' || localArea === '{{ $table->area_id }}'">
-                                            <option value="{{ $table->id }}">{{ $table->code }}</option>
-                                        </template>
+                                         <option value="{{ $table->id }}" x-show="localArea === '' || localArea === '{{ $table->area_id }}'">{{ $table->code }}</option>
                                         @endforeach
                                     </select>
 
