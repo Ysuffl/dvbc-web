@@ -14,7 +14,8 @@ class MasterController extends Controller
         $categories = MasterCategory::all();
         $levels = MasterLevel::orderBy('min_spending', 'asc')->get();
         $templates = BroadcastTemplate::orderBy('created_at', 'desc')->get();
-        return view('admin.master', compact('categories', 'levels', 'templates'));
+        $tags = \App\Models\MasterTag::orderBy('group_name', 'asc')->orderBy('name', 'asc')->get();
+        return view('admin.master', compact('categories', 'levels', 'templates', 'tags'));
     }
 
     // --- Category Methods ---
@@ -81,7 +82,16 @@ class MasterController extends Controller
 
     public function destroyLevel($id)
     {
-        MasterLevel::findOrFail($id)->delete();
+        $level = MasterLevel::findOrFail($id);
+        
+        // Count how many customers are using this level
+        $customerCount = \App\Models\Customer::where('master_level_id', $id)->count();
+        
+        if ($customerCount > 0) {
+            return redirect()->back()->with('error', "Gagal menghapus: Level '{$level->name}' masih digunakan oleh {$customerCount} pelanggan.");
+        }
+
+        $level->delete();
         return redirect()->back()->with('success', 'Level deleted successfully');
     }
 
@@ -115,5 +125,35 @@ class MasterController extends Controller
     {
         BroadcastTemplate::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Template deleted successfully');
+    }
+
+    // --- Tag Methods ---
+    public function storeTag(Request $request)
+    {
+        $validated = $request->validate([
+            'group_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+        ]);
+        
+        \App\Models\MasterTag::create($validated);
+        return redirect()->back()->with('success', 'Tag created successfully');
+    }
+
+    public function updateTag(Request $request, $id)
+    {
+        $tag = \App\Models\MasterTag::findOrFail($id);
+        $validated = $request->validate([
+            'group_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+        ]);
+        
+        $tag->update($validated);
+        return redirect()->back()->with('success', 'Tag updated successfully');
+    }
+
+    public function destroyTag($id)
+    {
+        \App\Models\MasterTag::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Tag deleted successfully');
     }
 }

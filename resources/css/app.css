@@ -1,3 +1,95 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --brand-primary: 39 31% 50%; /* #A68A56 */
+        --brand-light: 44 40% 95%; /* #F8F5EE */
+        --brand-soft: 42 22% 87%; /* #E8E2D2 */
+    }
+
+    body {
+        @apply antialiased scroll-smooth selection:bg-brand-primary/20 selection:text-brand-primary;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    /* Professional Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        @apply bg-stone-300 rounded-sm hover:bg-stone-400 transition-colors;
+    }
+}
+
+@layer components {
+    .glass-card {
+        @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.05)] rounded-lg;
+    }
+
+    .premium-card {
+        @apply bg-white rounded-xl p-8 border border-stone-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500;
+    }
+
+    .stat-card {
+        @apply p-8 rounded-lg border border-stone-100 bg-white hover:border-brand-primary/20 hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-500;
+    }
+
+    .nav-link {
+        @apply flex items-center gap-4 px-6 py-4 rounded-md transition-all duration-300 font-bold text-sm tracking-tight;
+    }
+
+    .btn-primary {
+        @apply bg-brand-primary text-white px-8 py-4 rounded-md font-bold uppercase tracking-widest text-xs shadow-lg shadow-brand-primary/20 hover:shadow-brand-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300;
+    }
+
+    .btn-secondary {
+        @apply bg-stone-50 text-stone-600 px-8 py-4 rounded-md font-bold uppercase tracking-widest text-xs border border-stone-100 hover:bg-white hover:border-brand-primary/30 hover:text-brand-primary transition-all duration-300;
+    }
+}
+
+@layer utilities {
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .animate-shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+    }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Custom Checkbox/Radio Styling */
+input[type="checkbox"], input[type="radio"] {
+    @apply text-brand-primary focus:ring-brand-primary/20 border-stone-200 rounded;
+}
+
+/* Flatpickr Customization for Premium Look */
+.flatpickr-calendar {
+    @apply rounded-lg border-none shadow-2xl p-4 bg-white !important;
+}
+
+.flatpickr-day.selected {
+    @apply bg-brand-primary border-brand-primary !important;
+}

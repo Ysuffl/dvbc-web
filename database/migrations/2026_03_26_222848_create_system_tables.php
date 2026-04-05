@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone')->nullable();
 
-            $table->unsignedSmallInteger('age')->nullable();
+            $table->string('age', 20)->nullable();
             $table->string('gender', 10)->nullable();
 
             // Finansial & Level

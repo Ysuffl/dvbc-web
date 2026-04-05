@@ -9,7 +9,7 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-3 uppercase tracking-tight">
-            <div class="w-10 h-10 bg-brand-light rounded-lg flex items-center justify-center text-brand-primary">
+            <div class="w-10 h-10 bg-brand-light rounded-md flex items-center justify-center text-brand-primary">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
             </div>
             Floor Management
@@ -18,11 +18,11 @@
     </div>
     <div class="flex items-center gap-3">
         <button @click="showAddAreaModal = true"
-            class="flex items-center gap-2 bg-brand-primary hover:opacity-90 active:scale-95 transition-all text-white font-extrabold py-2.5 px-5 rounded-lg shadow-lg text-[10px] uppercase tracking-widest">
+            class="flex items-center gap-2 bg-brand-primary hover:opacity-90 active:scale-95 transition-all text-white font-extrabold py-2.5 px-5 rounded-md shadow-lg text-[10px] uppercase tracking-widest">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Area
         </button>
         <button @click="showAddTableModal = true"
-            class="flex items-center gap-2 bg-stone-900 hover:opacity-90 active:scale-95 transition-all text-white font-extrabold py-2.5 px-5 rounded-lg shadow-lg text-[10px] uppercase tracking-widest">
+            class="flex items-center gap-2 bg-stone-900 hover:opacity-90 active:scale-95 transition-all text-white font-extrabold py-2.5 px-5 rounded-md shadow-lg text-[10px] uppercase tracking-widest">
             <i data-lucide="table-2" class="w-4 h-4"></i> Add Table
         </button>
     </div>
@@ -35,18 +35,18 @@
 <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-stone-200">
     @foreach($areas as $area)
     <a href="{{ route('floor.index', ['area' => $area->id]) }}"
-        class="flex items-center gap-2 px-5 py-3 rounded-t-lg font-extrabold text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border-b-2
+        class="flex items-center gap-2 px-5 py-3 rounded-t-md font-extrabold text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border-b-2
                {{ $selectedAreaId == $area->id
                     ? 'border-brand-primary text-brand-primary bg-brand-light'
                     : 'border-transparent text-stone-500 hover:text-stone-900 hover:bg-stone-50' }}">
         <i data-lucide="layers" class="w-4 h-4"></i>
         {{ $area->name }}
-        <span class="px-2 py-0.5 rounded text-[9px] {{ $selectedAreaId == $area->id ? 'bg-brand-primary text-white' : 'bg-stone-200 text-stone-600' }} ml-1">
+        <span class="px-2 py-0.5 rounded-sm text-[9px] {{ $selectedAreaId == $area->id ? 'bg-brand-primary text-white' : 'bg-stone-200 text-stone-600' }} ml-1">
             Lt.{{ $area->floor_number }}
         </span>
         {{-- Edit Area Button --}}
         <span @click.prevent="editArea({ id: {{ $area->id }}, name: '{{ addslashes($area->name) }}', description: '{{ addslashes($area->description ?? '') }}', floor_number: {{ $area->floor_number }} })"
-              class="ml-1 rounded p-1 hover:bg-black/10 transition-colors cursor-pointer block">
+              class="ml-1 rounded-sm p-1 hover:bg-black/10 transition-colors cursor-pointer block">
             <i data-lucide="pencil" class="w-3 h-3"></i>
         </span>
     </a>
@@ -60,20 +60,20 @@
 
     {{-- ── CANVAS PANEL ─────────────────────────────────────────────── --}}
     <div class="w-full">
-        <div class="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-md border border-stone-200 shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-stone-50/50">
                 <span class="font-extrabold text-stone-900 text-xs flex items-center gap-2 uppercase tracking-widest">
                     <i data-lucide="move" class="w-4 h-4 text-brand-primary"></i>
                     Layout Canvas — <span class="text-brand-primary">{{ $selectedArea->name ?? 'No Area' }}</span>
                 </span>
                 <button id="saveLayoutBtn"
-                    class="flex items-center gap-2 bg-stone-900 hover:opacity-90 active:scale-95 text-white text-[10px] font-extrabold py-2 px-4 rounded-lg transition-all uppercase tracking-widest">
+                    class="flex items-center gap-2 bg-stone-900 hover:opacity-90 active:scale-95 text-white text-[10px] font-extrabold py-2 px-4 rounded-md transition-all uppercase tracking-widest">
                     <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Layout
                 </button>
             </div>
 
             {{-- Canvas Container (Scrollable & Massive) --}}
-            <div class="relative w-full h-[800px] bg-stone-50 overflow-auto border-t border-stone-100 rounded-b-xl shadow-inner scroll-smooth" id="canvas-container">
+            <div class="relative w-full h-[800px] bg-stone-50 overflow-auto border-t border-stone-100 rounded-b-md shadow-inner scroll-smooth" id="canvas-container">
                 {{-- Dotted Grid matches canvas size --}}
                 <div class="absolute w-[3500px] h-[2500px] pointer-events-none opacity-30"
                      style="background-image: radial-gradient(#94a3b8 2px, transparent 2px); background-size: 30px 30px; z-index: 0;"></div>
@@ -89,7 +89,7 @@
                          style="left: {{ $table->x_pos }}px; top: {{ $table->y_pos }}px;
                                 width: {{ $table->shape == 'circle' ? '120px' : '90px' }};
                                 height: {{ $table->shape == 'circle' ? '120px' : '90px' }};
-                                border-radius: {{ $table->shape == 'circle' ? '50%' : '8px' }};
+                                border-radius: {{ $table->shape == 'circle' ? '50%' : '4px' }};
                                 background: {{ $table->status == 'available' ? 'linear-gradient(135deg, #ffffff 0%, #FAFAF9 100%)' : 'linear-gradient(135deg, #FFF8ED 0%, #FFEDD5 100%)' }};
                                 border: 2px solid {{ $table->status == 'available' ? '#E7E5E4' : '#A68A56' }}; z-index: 1;">
 
@@ -109,13 +109,13 @@
 
                         {{-- Min Spending Badge --}}
                         @if($table->min_spending > 0)
-                        <div class="absolute -bottom-3 px-2 py-0.5 rounded pl-1 pr-1 bg-stone-900 text-white text-[9px] font-extrabold whitespace-nowrap shadow-md z-10 transition-transform group-hover:scale-105 group-hover:-translate-y-1 block tracking-wider uppercase">
+                        <div class="absolute -bottom-3 px-2 py-0.5 rounded-sm pl-1 pr-1 bg-stone-900 text-white text-[9px] font-extrabold whitespace-nowrap shadow-md z-10 transition-transform group-hover:scale-105 group-hover:-translate-y-1 block tracking-wider uppercase">
                             Rp {{ number_format($table->min_spending/1000, 0) }}k
                         </div>
                         @endif
 
                         {{-- Hover tooltip (Extended info) --}}
-                        <div class="absolute -top-14 scale-0 group-hover:scale-100 transition-all origin-bottom bg-stone-900 text-white text-[10px] font-extrabold py-2 px-3 rounded-lg pointer-events-none whitespace-nowrap z-[100] shadow-xl uppercase tracking-widest">
+                        <div class="absolute -top-14 scale-0 group-hover:scale-100 transition-all origin-bottom bg-stone-900 text-white text-[10px] font-extrabold py-2 px-3 rounded-md pointer-events-none whitespace-nowrap z-[100] shadow-xl uppercase tracking-widest">
                             <span class="text-brand-primary">{{ $table->code }}</span> • Cap: {{ $table->capacity }}
                             <div class="mt-1 text-stone-300 text-[9px]">Min: Rp{{ number_format($table->min_spending, 0, ',', '.') }}</div>
                             {{-- Tooltip caret --}}
@@ -130,7 +130,7 @@
 
     {{-- ── TABLE LIST (BOTTOM GRID) ───────────────────────────────────────── --}}
     <div class="w-full">
-        <div class="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden p-6">
+        <div class="bg-white rounded-md border border-stone-200 shadow-sm overflow-hidden p-6">
             <h2 class="font-extrabold text-stone-900 text-sm mb-5 flex flex-wrap items-center justify-between gap-4 uppercase tracking-widest">
                 <span class="flex items-center gap-2">
                     <i data-lucide="list-tree" class="w-5 h-5 text-brand-primary"></i>
@@ -138,7 +138,7 @@
                 </span>
 
                 <div class="flex items-center gap-3">
-                    <label class="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg cursor-pointer hover:bg-stone-100 transition-colors">
+                    <label class="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-md cursor-pointer hover:bg-stone-100 transition-colors">
                         <input type="checkbox" x-model="allSelected" @change="toggleAll()" class="w-4 h-4 text-brand-primary border-stone-300 rounded focus:ring-brand-primary/20">
                         <span class="text-[10px] font-extrabold text-stone-600 uppercase tracking-widest">Select All</span>
                     </label>
@@ -146,7 +146,7 @@
             </h2>
 
             @if($tables->isEmpty())
-                <div class="p-10 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div class="p-10 text-center text-slate-400 bg-slate-50 rounded-md border border-dashed border-slate-200">
                     <i data-lucide="table-2" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
                     <p class="font-bold text-sm">Belum ada meja di area ini</p>
                     <p class="text-xs mt-1">Klik "Add Table" di bagian atas untuk menambahkan meja baru.</p>
@@ -154,14 +154,14 @@
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                     @foreach($tables as $table)
-                    <div class="group relative bg-white border border-stone-200 rounded-xl p-4 flex flex-col hover:border-brand-primary hover:shadow-lg transition-all">
+                    <div class="group relative bg-white border border-stone-200 rounded-md p-4 flex flex-col hover:border-brand-primary hover:shadow-lg transition-all">
                         {{-- Top Header --}}
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center gap-3">
                                 <label class="relative flex items-center justify-center cursor-pointer group/check">
                                     <input type="checkbox" :value="{{ $table->id }}" x-model="selectedTables"
                                            class="peer w-5 h-5 opacity-0 absolute">
-                                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-stone-50 border border-stone-200 peer-checked:bg-brand-primary peer-checked:border-brand-primary transition-all shrink-0">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-md bg-stone-50 border border-stone-200 peer-checked:bg-brand-primary peer-checked:border-brand-primary transition-all shrink-0">
                                         <i data-lucide="check" class="w-4 h-4 text-white hidden peer-checked:block"></i>
                                         <i data-lucide="{{ $table->shape == 'circle' ? 'circle' : 'square' }}"
                                            class="w-5 h-5 text-stone-300 peer-checked:hidden"></i>
@@ -199,7 +199,7 @@
                                     <input type="text" value="{{ $table->min_spending > 0 ? number_format($table->min_spending, 0, ',', '.') : '0' }}"
                                            oninput="let v = this.value.replace(/\D/g, ''); document.getElementById('inline_min_{{ $table->id }}').value = v || 0; this.value = v ? parseInt(v, 10).toLocaleString('id-ID') : '';"
                                            class="w-full max-w-[90px] text-[10px] text-right font-extrabold {{ $table->min_spending > 0 ? 'text-brand-primary bg-brand-light border-brand-primary/20' : 'text-stone-600 bg-stone-50 border-stone-200' }} border rounded text-xs px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-colors tabular-nums">
-                                    <button type="submit" class="p-1.5 bg-stone-900 text-white rounded hover:bg-brand-primary transition-colors shadow-sm" title="Update Minimum Cash">
+                                    <button type="submit" class="p-1.5 bg-stone-900 text-white rounded-sm hover:bg-brand-primary transition-colors shadow-sm" title="Update Minimum Cash">
                                         <i data-lucide="check" class="w-3 h-3"></i>
                                     </button>
                                 </div>
@@ -221,9 +221,9 @@
      x-transition:leave-start="translate-y-0 opacity-100"
      x-transition:leave-end="translate-y-20 opacity-0"
      class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] w-full max-w-2xl px-4">
-    <div class="bg-stone-900 shadow-2xl rounded-xl border border-stone-800 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="bg-stone-900 shadow-2xl rounded-md border border-stone-800 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-brand-primary rounded-lg flex items-center justify-center text-white font-black shadow-lg">
+            <div class="w-12 h-12 bg-brand-primary rounded-md flex items-center justify-center text-white font-black shadow-lg">
                 <span x-text="selectedTables.length"></span>
             </div>
             <div>
@@ -243,13 +243,13 @@
                 <input type="hidden" name="min_spending" id="bulk_min_val">
                 <input type="text" placeholder="SET MIN CASH" 
                        oninput="let v = this.value.replace(/\D/g, ''); document.getElementById('bulk_min_val').value = v || 0; this.value = v ? parseInt(v, 10).toLocaleString('id-ID') : '';"
-                       class="bg-stone-800 text-white border-stone-700 rounded-lg pl-9 pr-3 py-2.5 text-xs font-extrabold w-full md:w-[160px] focus:ring-brand-primary focus:border-brand-primary outline-none transition-all uppercase tracking-widest tabular-nums placeholder:text-stone-500">
+                       class="bg-stone-800 text-white border-stone-700 rounded-md pl-9 pr-3 py-2.5 text-xs font-extrabold w-full md:w-[160px] focus:ring-brand-primary focus:border-brand-primary outline-none transition-all uppercase tracking-widest tabular-nums placeholder:text-stone-500">
             </div>
 
-            <button type="submit" class="bg-brand-primary hover:opacity-90 text-white font-extrabold text-[10px] py-3 px-6 rounded-lg transition-all shadow-lg whitespace-nowrap active:scale-95 uppercase tracking-widest">
+            <button type="submit" class="bg-brand-primary hover:opacity-90 text-white font-extrabold text-[10px] py-3 px-6 rounded-md transition-all shadow-lg whitespace-nowrap active:scale-95 uppercase tracking-widest">
                 Apply Massal
             </button>
-            <button type="button" @click="selectedTables = []; allSelected = false" class="text-stone-500 hover:text-white transition-colors p-2 bg-stone-800 rounded-lg ml-1">
+            <button type="button" @click="selectedTables = []; allSelected = false" class="text-stone-500 hover:text-white transition-colors p-2 bg-stone-800 rounded-md ml-1">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </form>
@@ -262,10 +262,10 @@
 <div x-show="showAddAreaModal || showEditAreaModal"
      class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
      x-transition x-cloak>
-    <div class="bg-white rounded-2xl border border-stone-200 shadow-xl w-full max-w-md mx-4" @click.away="closeAreaModals()">
+    <div class="bg-white rounded-md border border-stone-200 shadow-xl w-full max-w-md mx-4" @click.away="closeAreaModals()">
         <div class="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
             <h3 class="font-extrabold text-stone-900 text-sm uppercase tracking-widest" x-text="showEditAreaModal ? 'Edit Area' : 'Tambah Area'"></h3>
-            <button @click="closeAreaModals()" class="text-stone-400 hover:text-stone-600 transition-colors w-8 h-8 flex items-center justify-center bg-stone-50 rounded-lg">
+            <button @click="closeAreaModals()" class="text-stone-400 hover:text-stone-600 transition-colors w-8 h-8 flex items-center justify-center bg-stone-50 rounded-md">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
@@ -276,24 +276,24 @@
             <div>
                 <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Nama Area *</label>
                 <input type="text" name="name" :value="editAreaData.name" required placeholder="VIP ROOM, OUTDOOR"
-                       class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary uppercase tracking-wider bg-stone-50">
+                       class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary uppercase tracking-wider bg-stone-50">
             </div>
             <div>
                 <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Deskripsi</label>
                 <textarea name="description" :value="editAreaData.description" rows="2" placeholder="KETERANGAN OPSIONAL"
-                          class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary resize-none uppercase tracking-wider bg-stone-50"></textarea>
+                          class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary resize-none uppercase tracking-wider bg-stone-50"></textarea>
             </div>
             <div>
                 <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Lantai *</label>
                 <input type="number" name="floor_number" :value="editAreaData.floor_number || 1" min="1" max="99" required
-                       class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary uppercase tracking-wider bg-stone-50 tabular-nums">
+                       class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary uppercase tracking-wider bg-stone-50 tabular-nums">
             </div>
             <div class="flex flex-col gap-3 pt-2">
                 <div class="flex gap-3">
                     <button type="button" @click="closeAreaModals()"
-                            class="flex-1 py-3.5 rounded-lg border border-stone-200 text-xs font-extrabold text-stone-600 hover:bg-stone-50 transition-colors uppercase tracking-widest">Batal</button>
+                            class="flex-1 py-3.5 rounded-md border border-stone-200 text-xs font-extrabold text-stone-600 hover:bg-stone-50 transition-colors uppercase tracking-widest">Batal</button>
                     <button type="submit"
-                            class="flex-1 py-3.5 rounded-lg bg-brand-primary text-white text-xs font-extrabold hover:opacity-90 transition-all shadow-lg uppercase tracking-widest">
+                            class="flex-1 py-3.5 rounded-md bg-brand-primary text-white text-xs font-extrabold hover:opacity-90 transition-all shadow-lg uppercase tracking-widest">
                         <span x-text="showEditAreaModal ? 'Simpan' : 'Tambah'"></span>
                     </button>
                 </div>
@@ -308,12 +308,12 @@
                                 confirmButtonText: 'Ya, Hapus',
                                 background: '#ffffff',
                                 customClass: {
-                                    confirmButton: 'bg-red-500 px-8 py-3 rounded-lg font-extrabold text-white mr-3 uppercase tracking-widest text-xs',
-                                    cancelButton: 'bg-stone-100 px-8 py-3 rounded-lg font-extrabold text-stone-500 uppercase tracking-widest text-xs'
+                                    confirmButton: 'bg-red-500 px-8 py-3 rounded-md font-extrabold text-white mr-3 uppercase tracking-widest text-xs',
+                                    cancelButton: 'bg-stone-100 px-8 py-3 rounded-md font-extrabold text-stone-500 uppercase tracking-widest text-xs'
                                 },
                                 buttonsStyling: false
                             }).then((result) => { if (result.isConfirmed) $refs.deleteAreaForm.submit() })"
-                            class="w-full py-3 rounded-lg border border-red-200 text-[10px] font-extrabold text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2 mt-2 uppercase tracking-widest">
+                            class="w-full py-3 rounded-md border border-red-200 text-[10px] font-extrabold text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-2 mt-2 uppercase tracking-widest">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Area
                     </button>
                 </template>
@@ -333,10 +333,10 @@
 <div x-show="showAddTableModal || showEditTableModal"
      class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
      x-transition x-cloak>
-    <div class="bg-white rounded-2xl border border-stone-200 shadow-xl w-full max-w-lg mx-4" @click.away="closeTableModals()">
+    <div class="bg-white rounded-md border border-stone-200 shadow-xl w-full max-w-lg mx-4" @click.away="closeTableModals()">
         <div class="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
             <h3 class="font-extrabold text-stone-900 text-sm uppercase tracking-widest" x-text="showEditTableModal ? 'Edit Meja' : 'Tambah Meja'"></h3>
-            <button @click="closeTableModals()" class="text-stone-400 hover:text-stone-600 transition-colors w-8 h-8 flex items-center justify-center bg-stone-50 rounded-lg">
+            <button @click="closeTableModals()" class="text-stone-400 hover:text-stone-600 transition-colors w-8 h-8 flex items-center justify-center bg-stone-50 rounded-md">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
@@ -349,12 +349,12 @@
                 <div>
                     <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Kode Meja *</label>
                     <input type="text" name="code" :value="editTableData.code" required placeholder="T01, VIP-A"
-                           class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 uppercase tracking-wider">
+                           class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 uppercase tracking-wider">
                 </div>
                 <div>
                     <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Area *</label>
                     <select name="area_fk_id" required
-                            class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 uppercase tracking-wider">
+                            class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 uppercase tracking-wider">
                         @foreach($areas as $area)
                         <option value="{{ $area->id }}"
                             x-bind:selected="editTableData.area_fk_id == {{ $area->id }} || (!showEditTableModal && {{ $area->id }} == {{ $selectedAreaId ?? 0 }})">
@@ -369,13 +369,13 @@
                 <div>
                     <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Bentuk *</label>
                     <div class="flex gap-2">
-                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer border rounded-lg px-2 py-3.5 text-[10px] font-extrabold uppercase tracking-widest transition-all"
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer border rounded-md px-2 py-3.5 text-[10px] font-extrabold uppercase tracking-widest transition-all"
                                :class="editTableData.shape != 'circle' ? 'border-brand-primary bg-brand-light text-brand-primary' : 'border-stone-200 text-stone-500 bg-stone-50 hover:bg-stone-100'">
                             <input type="radio" name="shape" value="rectangle" class="hidden"
                                    :checked="editTableData.shape != 'circle'" @change="editTableData.shape = 'rectangle'">
                             <i data-lucide="square" class="w-3 h-3"></i> Kotak
                         </label>
-                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer border rounded-lg px-2 py-3.5 text-[10px] font-extrabold uppercase tracking-widest transition-all"
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer border rounded-md px-2 py-3.5 text-[10px] font-extrabold uppercase tracking-widest transition-all"
                                :class="editTableData.shape == 'circle' ? 'border-brand-primary bg-brand-light text-brand-primary' : 'border-stone-200 text-stone-500 bg-stone-50 hover:bg-stone-100'">
                             <input type="radio" name="shape" value="circle" class="hidden"
                                    :checked="editTableData.shape == 'circle'" @change="editTableData.shape = 'circle'">
@@ -386,7 +386,7 @@
                 <div>
                     <label class="block text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-2.5">Kapasitas *</label>
                     <input type="number" name="capacity" :value="editTableData.capacity || 4" min="1" max="99" required
-                           class="w-full border border-stone-200 rounded-lg px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary tabular-nums bg-stone-50">
+                           class="w-full border border-stone-200 rounded-md px-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary tabular-nums bg-stone-50">
                 </div>
             </div>
 
@@ -402,7 +402,7 @@
                            x-bind:value="editTableData.min_spending ? parseInt(editTableData.min_spending, 10).toLocaleString('id-ID') : '0'"
                            @input="let v = $event.target.value.replace(/\D/g, ''); editTableData.min_spending = v ? parseInt(v, 10) : 0; $event.target.value = v ? parseInt(v, 10).toLocaleString('id-ID') : '';"
                            placeholder="0" required
-                           class="w-full border border-stone-200 rounded-lg pl-10 pr-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 tabular-nums">
+                           class="w-full border border-stone-200 rounded-md pl-10 pr-4 py-3.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary bg-stone-50 tabular-nums">
                 </div>
                 <p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mt-2">Contoh: 500000 = Rp 500.000 | Set 0 untuk tanpa minimum</p>
             </div>

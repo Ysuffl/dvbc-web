@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MasterTag extends Model
 {
-    protected $fillable = ['group_name', 'name'];
+    protected $fillable = ['group_name', 'name', 'font_size'];
 
     public function bookings()
     {

@@ -62,6 +62,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/master/templates', [\App\Http\Controllers\MasterController::class, 'storeTemplate'])->name('master.template.store');
         Route::put('/master/templates/{id}', [\App\Http\Controllers\MasterController::class, 'updateTemplate'])->name('master.template.update');
         Route::delete('/master/templates/{id}', [\App\Http\Controllers\MasterController::class, 'destroyTemplate'])->name('master.template.destroy');
+        Route::post('/master/tags', [\App\Http\Controllers\MasterController::class, 'storeTag'])->name('master.tag.store');
+        Route::put('/master/tags/{id}', [\App\Http\Controllers\MasterController::class, 'updateTag'])->name('master.tag.update');
+        Route::delete('/master/tags/{id}', [\App\Http\Controllers\MasterController::class, 'destroyTag'])->name('master.tag.destroy');
 
         // Broadcasting
         Route::get('/broadcast', [\App\Http\Controllers\BroadcastController::class, 'index'])->name('broadcast.index');

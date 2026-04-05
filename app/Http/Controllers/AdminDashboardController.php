@@ -212,10 +212,10 @@ class AdminDashboardController extends Controller
         })->count(),
             'total_revenue' => $uniqueStatsGroups->filter(function ($g) {
             $status = strtolower($g['first']->status);
-            return in_array($status, ['completed', 'billed', 'ok', 'finished', 'done', 'paid']);
+            return in_array($status, ['confirmed', 'completed', 'billed', 'ok', 'finished', 'done', 'paid']);
         })->sum(function ($g) {
             return $g['first']->billed_price;
-        }),
+        }) + Customer::sum('total_spending'),
         ];
 
         // Category breakdown (filtered & unique)

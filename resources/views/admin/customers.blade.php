@@ -42,14 +42,14 @@ if (!function_exists('getContrast')) {
         }
      }">
     <!-- Premium Header -->
-    <div class="relative overflow-hidden bg-stone-900 rounded-xl p-10 shadow-2xl">
+    <div class="relative overflow-hidden bg-stone-900 rounded-md p-10 shadow-2xl">
         <!-- Abstract Background Shapes -->
         <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-brand-primary/10 rounded-full blur-3xl"></div>
         <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
         
         <div class="relative flex flex-col md:flex-row justify-between items-center gap-8">
             <div class="text-center md:text-left">
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary/10 rounded-lg mb-4 border border-brand-primary/20 backdrop-blur-sm">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary/10 rounded-md mb-4 border border-brand-primary/20 backdrop-blur-sm">
                     <i data-lucide="shield-check" class="w-4 h-4 text-brand-primary"></i>
                     <span class="text-[10px] font-extrabold text-brand-primary uppercase tracking-widest">Verified CRM</span>
                 </div>
@@ -61,12 +61,12 @@ if (!function_exists('getContrast')) {
 
             <!-- Stats Quick View -->
             <div class="flex gap-4">
-                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-xl min-w-[140px] text-center">
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-md min-w-[140px] text-center">
                     <p class="text-2xl font-extrabold text-white leading-none mb-2 tabular-nums">{{ $customers->total() }}</p>
                     <p class="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest">Total Guests</p>
                 </div>
-                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-xl min-w-[140px] text-center">
-                    <p class="text-2xl font-extrabold text-brand-primary leading-none mb-2 tabular-nums">Rp {{ number_format($lifetimeRevenue / 1000000, 1) }}M</p>
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-md min-w-[140px] text-center">
+                    <p class="text-2xl font-extrabold text-brand-primary leading-none mb-2 tabular-nums">Rp {{ $lifetimeRevenue >= 1000000 ? number_format($lifetimeRevenue / 1000000, 1) . 'M' : number_format($lifetimeRevenue, 0, ',', '.') }}</p>
                     <p class="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest">Lifetime Revenue</p>
                 </div>
             </div>
@@ -74,29 +74,46 @@ if (!function_exists('getContrast')) {
     </div>
 
     <!-- Booking List Card -->
-    <div class="bg-white rounded-xl shadow-md border border-stone-200 overflow-hidden mt-6">
+    <div class="bg-white rounded-md shadow-md border border-stone-200 overflow-hidden mt-6">
         <div class="p-8">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-                <h2 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase">Active Relationships</h2>
+            <div class="flex flex-col xl:flex-row items-center justify-between gap-6 mb-8">
+                <h2 class="text-xl font-extrabold text-stone-900 tracking-tight uppercase shrink-0">Active Relationships</h2>
                 
-                <div class="flex items-center gap-3">
-                    <!-- Export Button -->
-                    <a href="{{ route('customers.export') }}" 
-                       class="px-4 py-2.5 bg-brand-light text-brand-primary hover:opacity-90 rounded-lg text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 transition-all border border-brand-primary/20 shadow-sm">
-                        <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Export XLSX
-                    </a>
+                <div class="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
+                    <!-- Search Bar -->
+                    <form action="{{ route('customers') }}" method="GET" class="relative group w-full md:w-80">
+                        <input type="text" 
+                               name="search" 
+                               value="{{ request('search') }}"
+                               placeholder="Search name or phone..." 
+                               class="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-md text-[11px] font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
+                        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400 group-focus-within:text-brand-primary transition-colors"></i>
+                        @if(request('search'))
+                            <a href="{{ route('customers') }}" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-stone-200 rounded-full transition-colors">
+                                <i data-lucide="x" class="w-3 h-3 text-stone-500"></i>
+                            </a>
+                        @endif
+                    </form>
 
-                    <!-- Import Button -->
-                    <label class="px-4 py-2.5 bg-stone-900 text-white hover:opacity-90 rounded-lg text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm cursor-pointer">
-                        <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
-                        <span>Import XLSX</span>
-                        <input type="file" id="importFile" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleImport(event)">
-                    </label>
+                    <div class="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <!-- Export Button -->
+                        <a href="{{ route('customers.export') }}" 
+                           class="px-4 py-2.5 bg-brand-light text-brand-primary hover:opacity-90 rounded-md text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 transition-all border border-brand-primary/20 shadow-sm">
+                            <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Export XLSX
+                        </a>
 
-                    <!-- Loading Indicator for Import -->
-                    <div id="importLoading" class="hidden flex items-center gap-2 px-3 py-2 bg-stone-100 rounded-lg">
-                        <div class="w-3 h-3 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest">Processing...</span>
+                        <!-- Import Button -->
+                        <label class="px-4 py-2.5 bg-stone-900 text-white hover:opacity-90 rounded-md text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm cursor-pointer">
+                            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                            <span>Import XLSX</span>
+                            <input type="file" id="importFile" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleImport(event)">
+                        </label>
+
+                        <!-- Loading Indicator for Import -->
+                        <div id="importLoading" class="hidden flex items-center gap-2 px-3 py-2 bg-stone-100 rounded-md">
+                            <div class="w-3 h-3 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest">Processing...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -105,15 +122,15 @@ if (!function_exists('getContrast')) {
                 <table class="w-full text-left border-separate border-spacing-y-3">
                     <thead>
                         <tr class="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest bg-stone-50">
-                            <th class="py-3 px-4 text-left rounded-l-lg border-y border-l border-stone-200">Guest Name</th>
-                            <th class="py-3 px-4 text-left border-y border-stone-200">Level</th>
-                            <th class="py-3 px-4 text-left border-y border-stone-200">Gender</th>
-                            <th class="py-3 px-4 text-left border-y border-stone-200">Last Visit</th>
-                            <th class="py-3 px-4 text-left border-y border-stone-200">Tags</th>
-                            <th class="py-3 px-4 text-center border-y border-stone-200">Visits</th>
-                            <th class="py-3 px-4 text-right border-y border-stone-200">Total Spend</th>
-                            <th class="py-3 px-4 text-left border-y border-stone-200">Contact</th>
-                            <th class="py-3 px-4 text-right rounded-r-lg border-y border-r border-stone-200">Actions</th>
+                            <th class="py-3 px-4 text-left rounded-l-md border-y border-l border-stone-200 min-w-[200px]">Guest Name</th>
+                            <th class="py-3 px-4 text-left border-y border-stone-200 min-w-[100px]">Level</th>
+                            <th class="py-3 px-4 text-left border-y border-stone-200 min-w-[80px]">Gender</th>
+                            <th class="py-3 px-4 text-left border-y border-stone-200 min-w-[120px]">Last Visit</th>
+                            <th class="py-3 px-4 text-left border-y border-stone-200 min-w-[150px]">Tags</th>
+                            <th class="py-3 px-4 text-center border-y border-stone-200 min-w-[60px]">Visits</th>
+                            <th class="py-3 px-4 text-right border-y border-stone-200 min-w-[120px]">Total Spend</th>
+                            <th class="py-3 px-4 text-left border-y border-stone-200 min-w-[120px]">Contact</th>
+                            <th class="py-3 px-4 text-right rounded-r-md border-y border-r border-stone-200 min-w-[100px]">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -128,14 +145,14 @@ if (!function_exists('getContrast')) {
                         @endphp
                         <tr class="group hover:shadow-lg transition-all duration-300">
                             <!-- Guest Name -->
-                            <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white rounded-l-xl border-y border-l border-stone-100 transition-colors">
+                            <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white rounded-l-md border-y border-l border-stone-100 transition-colors">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 bg-brand-light flex items-center justify-center rounded-lg text-brand-primary font-extrabold text-sm uppercase ring-2 ring-transparent group-hover:ring-brand-primary/20 transition-all shadow-sm">
+                                    <div class="w-10 h-10 bg-brand-light flex items-center justify-center rounded-md text-brand-primary font-extrabold text-sm uppercase ring-2 ring-transparent group-hover:ring-brand-primary/20 transition-all shadow-sm">
                                         {{ substr($c->name, 0, 2) }}
                                     </div>
                                     <div>
                                         <h4 class="font-extrabold text-stone-900 text-sm tracking-tight uppercase">{{ $c->name }}</h4>
-                                        <p class="text-[9px] text-stone-400 font-extrabold uppercase tracking-widest mt-1">{{ $c->gender ?: 'Not Set' }} • {{ $c->age ? $c->age.' Thn' : '---' }}</p>
+                                        <p class="text-[9px] text-stone-400 font-extrabold uppercase tracking-widest mt-1">{{ $c->gender ?: 'Not Set' }} • {{ $c->age ?: '---' }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -147,7 +164,7 @@ if (!function_exists('getContrast')) {
                                 $style = $isTailwind ? '' : "background: {$levelColor}; color: {$txtColor}; text-shadow: 0 1px 2px rgba(0,0,0,.1)";
                             @endphp
                             <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white border-y border-stone-100 transition-colors">
-                                <span class="px-2 py-1 {{ $isTailwind ? $levelColor : '' }} rounded text-[9px] font-extrabold uppercase tracking-widest flex items-center gap-1.5 w-fit"
+                                <span class="px-2 py-1 {{ $isTailwind ? $levelColor : '' }} rounded-sm text-[9px] font-extrabold uppercase tracking-widest flex items-center gap-1.5 w-fit"
                                       style="{{ $style }}">
                                     <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
                                     {{ $levelName }}
@@ -185,7 +202,7 @@ if (!function_exists('getContrast')) {
                                     @endphp
                                     @if($topTags->isNotEmpty())
                                         @foreach($topTags as $tag)
-                                            <span class="px-2 py-0.5 bg-stone-100 text-stone-600 rounded text-[9px] font-extrabold uppercase tracking-widest border border-stone-200">
+                                            <span class="px-2 py-0.5 bg-stone-100 text-stone-600 rounded-sm text-[9px] font-extrabold uppercase tracking-widest border border-stone-200">
                                                 {{ $tag->name }}
                                             </span>
                                         @endforeach
@@ -197,7 +214,7 @@ if (!function_exists('getContrast')) {
 
                             <!-- Total Visits -->
                             <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white border-y border-stone-100 transition-colors text-center">
-                                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-lg border border-stone-200 shadow-sm">
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-md border border-stone-200 shadow-sm">
                                     <span class="text-xs font-extrabold text-stone-900 leading-none tabular-nums">{{ $c->total_combined_visits ?? 0 }}</span>
                                     <i data-lucide="award" class="w-3 h-3 text-brand-primary"></i>
                                 </div>
@@ -221,7 +238,7 @@ if (!function_exists('getContrast')) {
                             </td>
 
                             <!-- Actions -->
-                            <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white rounded-r-xl border-y border-r border-stone-100 transition-colors text-right">
+                            <td class="py-5 px-4 bg-stone-50/50 group-hover:bg-white rounded-r-md border-y border-r border-stone-100 transition-colors text-right">
                                 <div class="flex items-center justify-end gap-2 text-stone-400">
                                     @if($c->phone)
                                         @php
@@ -232,7 +249,7 @@ if (!function_exists('getContrast')) {
                                             $waMsg = urlencode("Hello {$c->name}, this is DreamVille calling! We hope you had a great experience with us. Hope to see you soon!");
                                         @endphp
                                         <a href="https://wa.me/{{ $waNumber }}?text={{ $waMsg }}" target="_blank"
-                                           class="p-2 bg-stone-900 text-brand-light hover:opacity-90 rounded-lg transition-all shadow-md group-hover:scale-105 active:scale-95">
+                                           class="p-2 bg-stone-900 text-brand-light hover:opacity-90 rounded-md transition-all shadow-md group-hover:scale-105 active:scale-95">
                                             <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
                                         </a>
                                     @endif
@@ -244,7 +261,7 @@ if (!function_exists('getContrast')) {
                                             gender: '{{ $c->gender }}',
                                             age: '{{ $c->age }}'
                                         }; showEditModal = true; $nextTick(() => lucide.createIcons())"
-                                        class="p-2 bg-white border border-stone-200 text-stone-400 hover:text-stone-900 hover:border-stone-300 rounded-lg transition-all group-hover:scale-105 active:scale-95 shadow-sm">
+                                        class="p-2 bg-white border border-stone-200 text-stone-400 hover:text-stone-900 hover:border-stone-300 rounded-md transition-all group-hover:scale-105 active:scale-95 shadow-sm">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </button>
                                     <button 
@@ -252,11 +269,12 @@ if (!function_exists('getContrast')) {
                                             name: '{{ $c->name }}', 
                                             level: '{{ $levelName }}', 
                                             total_spent: {{ $c->total_spent ?? 0 }}, 
-                                            visits: {{ $c->visits_count ?? 0 }},
+                                            total_spending: {{ $c->total_spending ?? 0 }}, 
+                                            visits: {{ $c->total_combined_visits ?? 0 }},
                                             phone: '{{ $c->phone }}',
                                             last_visit: '{{ $latest ? $latest->start_time->format('d M, Y') : 'Never' }}'
                                         }; showProgressModal = true; $nextTick(() => lucide.createIcons())"
-                                        class="p-2 bg-white border border-stone-200 text-stone-400 hover:text-brand-primary hover:border-brand-primary rounded-lg transition-all group-hover:scale-105 active:scale-95 shadow-sm">
+                                        class="p-2 bg-white border border-stone-200 text-stone-400 hover:text-brand-primary hover:border-brand-primary rounded-md transition-all group-hover:scale-105 active:scale-95 shadow-sm">
                                         <i data-lucide="external-link" class="w-4 h-4"></i>
                                     </button>
                                 </div>
@@ -268,7 +286,7 @@ if (!function_exists('getContrast')) {
             </div>
 
             <div class="mt-8">
-                {{ $customers->links() }}
+                {{ $customers->links('components.pagination') }}
             </div>
         </div>
     </div>
@@ -288,7 +306,7 @@ if (!function_exists('getContrast')) {
             <div x-show="showProgressModal" 
                  x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-stone-200">
+                 class="inline-block align-bottom bg-white rounded-md text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-stone-200">
                 
                 <div class="p-8 sm:p-10">
                     <div class="flex justify-between items-start mb-8">
@@ -296,13 +314,13 @@ if (!function_exists('getContrast')) {
                             <h3 class="text-2xl font-extrabold text-stone-900 tracking-tight uppercase" x-text="selectedCust.name"></h3>
                             <p class="text-stone-400 font-extrabold text-[10px] uppercase tracking-widest mt-1" x-text="selectedCust.phone"></p>
                         </div>
-                        <button @click="showProgressModal = false" class="p-2 bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg transition-all border border-stone-200">
+                        <button @click="showProgressModal = false" class="p-2 bg-stone-50 text-stone-400 hover:text-stone-900 rounded-md transition-all border border-stone-200">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
 
                     <!-- Visual Progress Card -->
-                    <div class="bg-stone-50 border border-stone-200 rounded-xl p-8 relative overflow-hidden">
+                    <div class="bg-stone-50 border border-stone-200 rounded-md p-8 relative overflow-hidden">
                         <!-- Header inside card -->
                         <div class="flex justify-between items-start mb-10 border-b border-stone-200 pb-6">
                             <div class="space-y-1">
@@ -323,14 +341,14 @@ if (!function_exists('getContrast')) {
                             <!-- Progress Label -->
                             <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
                                 <span class="text-[10px] font-extrabold text-stone-900 mb-1 uppercase tracking-widest bg-white px-3 py-1 rounded border border-stone-200 shadow-sm tabular-nums"
-                                      x-text="'Rp ' + (selectedCust.total_spent || 0).toLocaleString() + ' / Rp ' + 
-                                              (parseFloat(levels.find(l => parseFloat(l.min_spending) > parseFloat(selectedCust.total_spent))?.min_spending || levels[levels.length-1].min_spending)).toLocaleString()">
+                                      x-text="'Rp ' + ((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)).toLocaleString() + ' / Rp ' + 
+                                              (parseFloat(levels.find(l => parseFloat(l.min_spending) > ((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)))?.min_spending || levels[levels.length-1].min_spending)).toLocaleString()">
                                 </span>
                             </div>
 
                             <!-- roadmap container -->
                             <div class="relative pt-8">
-                                <div class="h-3 w-full bg-stone-200 rounded-full flex gap-0.5 overflow-hidden">
+                                <div class="h-3 w-full bg-stone-200 rounded-md flex gap-0.5 overflow-hidden">
                                     <template x-for="i in 10">
                                         <div class="flex-1 rounded-sm transition-all duration-700"
                                              :class="progressPercentage >= (i * 10) ? 'bg-brand-primary' : 'bg-transparent'"></div>
@@ -342,15 +360,15 @@ if (!function_exists('getContrast')) {
                                         <div class="relative flex flex-col items-center group">
                                             <!-- Node Circle -->
                                             <div class="w-8 h-8 rounded-full border-[2px] flex items-center justify-center transition-all duration-500 z-10 shadow-sm"
-                                                 :style="(parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) && !lvl.badge_color.includes('bg-')) ? 'background:' + lvl.badge_color + '; border-color: white' : ''"
-                                                 :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) 
+                                                 :style="(((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)) >= parseFloat(lvl.min_spending) && !lvl.badge_color.includes('bg-')) ? 'background:' + lvl.badge_color + '; border-color: white' : ''"
+                                                 :class="(((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)) >= parseFloat(lvl.min_spending)) 
                                                          ? (lvl.badge_color.includes('bg-') ? lvl.badge_color + ' border-white text-white' : 'text-white bg-brand-primary border-brand-primary') 
                                                          : 'bg-stone-50 border-stone-300 text-stone-300'">
-                                                <i data-lucide="star" class="w-3.5 h-3.5" :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) ? 'fill-current' : ''"></i>
+                                                <i data-lucide="star" class="w-3.5 h-3.5" :class="(((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)) >= parseFloat(lvl.min_spending)) ? 'fill-current' : ''"></i>
                                             </div>
                                             <!-- Node Label -->
                                             <p class="absolute top-10 text-[9px] font-extrabold uppercase tracking-widest whitespace-nowrap text-center"
-                                               :class="parseFloat(selectedCust.total_spent) >= parseFloat(lvl.min_spending) ? 'text-stone-900' : 'text-stone-400'"
+                                               :class="(((parseFloat(selectedCust.total_spending) || 0) + (parseFloat(selectedCust.total_spent) || 0)) >= parseFloat(lvl.min_spending)) ? 'text-stone-900' : 'text-stone-400'"
                                                x-text="(lvl.name === 'Bronze' ? '' : 'VIP ') + lvl.name"></p>
                                         </div>
                                     </template>
@@ -366,7 +384,7 @@ if (!function_exists('getContrast')) {
                     </div>
 
                     <div class="mt-8">
-                        <button @click="showProgressModal = false" class="w-full py-4 bg-stone-100 text-stone-500 rounded-lg text-xs font-extrabold hover:bg-stone-200 transition-all uppercase tracking-widest leading-none border border-stone-200">
+                        <button @click="showProgressModal = false" class="w-full py-4 bg-stone-100 text-stone-500 rounded-md text-xs font-extrabold hover:bg-stone-200 transition-all uppercase tracking-widest leading-none border border-stone-200">
                             Tutup Detail
                         </button>
                     </div>
@@ -390,7 +408,7 @@ if (!function_exists('getContrast')) {
             <div x-show="showEditModal" 
                  x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full border border-stone-200">
+                 class="inline-block align-bottom bg-white rounded-md text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full border border-stone-200">
                 
                 <form :action="'/customers/' + editCust.id" method="POST" class="p-8 sm:p-10">
                     @csrf
@@ -401,7 +419,7 @@ if (!function_exists('getContrast')) {
                             <h3 class="text-lg font-extrabold text-stone-900 tracking-widest uppercase">Edit Customer</h3>
                             <p class="text-stone-400 font-extrabold text-[10px] mt-1 tracking-widest uppercase">Update guest profile information</p>
                         </div>
-                        <button type="button" @click="showEditModal = false" class="p-2 bg-stone-50 text-stone-400 hover:text-stone-900 rounded-lg border border-stone-200 transition-all">
+                        <button type="button" @click="showEditModal = false" class="p-2 bg-stone-50 text-stone-400 hover:text-stone-900 rounded-md border border-stone-200 transition-all">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -411,14 +429,14 @@ if (!function_exists('getContrast')) {
                         <div class="space-y-2">
                             <label class="text-[9px] font-extrabold text-stone-500 uppercase tracking-widest ml-1">Full Name</label>
                             <input type="text" name="name" x-model="editCust.name" required
-                                   class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
+                                   class="w-full bg-stone-50 border border-stone-200 rounded-md px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
                         </div>
 
                         <!-- Phone -->
                         <div class="space-y-2">
                             <label class="text-[9px] font-extrabold text-stone-500 uppercase tracking-widest ml-1">Phone Number</label>
                             <input type="text" name="phone" x-model="editCust.phone"
-                                   class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest tabular-nums">
+                                   class="w-full bg-stone-50 border border-stone-200 rounded-md px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest tabular-nums">
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -426,7 +444,7 @@ if (!function_exists('getContrast')) {
                             <div class="space-y-2">
                                 <label class="text-[9px] font-extrabold text-stone-500 uppercase tracking-widest ml-1">Gender</label>
                                 <select name="gender" x-model="editCust.gender"
-                                        class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
+                                        class="w-full bg-stone-50 border border-stone-200 rounded-md px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
                                     <option value="">Not Set</option>
                                     <option value="MALE">Laki-laki</option>
                                     <option value="FEMALE">Perempuan</option>
@@ -435,20 +453,28 @@ if (!function_exists('getContrast')) {
 
                             <!-- Age -->
                             <div class="space-y-2">
-                                <label class="text-[9px] font-extrabold text-stone-500 uppercase tracking-widest ml-1">Age (Years)</label>
-                                <input type="number" name="age" x-model="editCust.age"
-                                       class="w-full bg-stone-50 border border-stone-200 rounded-lg px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest tabular-nums">
+                                <label class="text-[9px] font-extrabold text-stone-500 uppercase tracking-widest ml-1">Age Group</label>
+                                <select name="age" x-model="editCust.age"
+                                       class="w-full bg-stone-50 border border-stone-200 rounded-md px-4 py-3.5 text-stone-900 font-extrabold text-xs focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all uppercase tracking-widest">
+                                    <option value="">N/A</option>
+                                    <option value="<18"><18</option>
+                                    <option value="18-24">18-24</option>
+                                    <option value="25-34">25-34</option>
+                                    <option value="35-44">35-44</option>
+                                    <option value="45-59">45-59</option>
+                                    <option value=">59">>59</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-8 flex gap-3">
                         <button type="button" @click="showEditModal = false" 
-                                class="flex-1 py-3 bg-stone-100 text-stone-500 border border-stone-200 rounded-lg text-[10px] font-extrabold hover:bg-stone-200 transition-all uppercase tracking-widest">
+                                class="flex-1 py-3 bg-stone-100 text-stone-500 border border-stone-200 rounded-md text-[10px] font-extrabold hover:bg-stone-200 transition-all uppercase tracking-widest">
                             Cancel
                         </button>
                         <button type="submit" 
-                                class="flex-[2] py-3 bg-brand-primary text-white rounded-lg text-[10px] font-extrabold hover:opacity-90 transition-all uppercase tracking-widest shadow-lg">
+                                class="flex-[2] py-3 bg-brand-primary text-white rounded-md text-[10px] font-extrabold hover:opacity-90 transition-all uppercase tracking-widest shadow-lg">
                             Save Changes
                         </button>
                     </div>

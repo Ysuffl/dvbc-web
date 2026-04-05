@@ -33,8 +33,8 @@ class DemographicController extends Controller
             '18-24'   => ['min' => 18, 'max' => 24],
             '25-34'   => ['min' => 25, 'max' => 34],
             '35-44'   => ['min' => 35, 'max' => 44],
-            '45+'     => ['min' => 45, 'max' => 200],
-            'Unknown' => ['min' => -1, 'max' => -1],
+            '45-59'   => ['min' => 45, 'max' => 59],
+            '>59'     => ['min' => 60, 'max' => 200],
         ];
 
         $ageData = [];
@@ -62,7 +62,6 @@ class DemographicController extends Controller
         $genders = [
             'Male'    => [$previousYear => 0, $currentYear => 0],
             'Female'  => [$previousYear => 0, $currentYear => 0],
-            'Unknown' => [$previousYear => 0, $currentYear => 0],
         ];
 
         $totalCustPerYear = [$previousYear => 0, $currentYear => 0];
@@ -76,11 +75,12 @@ class DemographicController extends Controller
             // Sort into age segments
             $age = $b->age;
             if ($age === null) {
-                $ageData['Unknown'][$year] += $b->total_cust;
+                // Diminta: hilangkan data unknown
+            } elseif (isset($ageData[$age])) {
+                $ageData[$age][$year] += $b->total_cust;
             } else {
                 foreach ($ageData as $key => &$data) {
-                    if ($key === 'Unknown') continue;
-                    if ($age >= $data['min'] && $age <= $data['max']) {
+                    if (is_numeric($age) && $age >= $data['min'] && $age <= $data['max']) {
                         $data[$year] += $b->total_cust;
                         break;
                     }
@@ -94,7 +94,7 @@ class DemographicController extends Controller
             } elseif ($gender == 'female' || $gender == 'perempuan') {
                 $genders['Female'][$year] += $b->total_cust;
             } else {
-                $genders['Unknown'][$year] = ($genders['Unknown'][$year] ?? 0) + $b->total_cust;
+                // Diabaikan sesuai permintaan: hilangkan unknown
             }
         }
 
