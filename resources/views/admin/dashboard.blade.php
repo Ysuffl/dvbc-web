@@ -1400,22 +1400,26 @@
                 </template>
             </div>
         </div>
-        @php $flatTags = $tags->flatten(); @endphp
+        @php 
+            $flatTags = \App\Models\MasterTag::orderBy('master_tag_group_id')->orderBy('id')->get(); 
+        @endphp
 <!-- Hidden table for Export -->
 <table id="export-table" style="display: none;">
     <thead>
         <tr>
-            <th>name</th>
-            <th>phone</th>
-            <th>gender</th>
-            <th>age_range</th>
-            <th>nat</th>
-            <th>total_spend</th>
-            <th>total_visit</th>
             <th>date</th>
+            <th>day</th>
             <th>time_in</th>
             <th>time_out</th>
+            <th>name</th>
+            <th>phone</th>
+            <th>age_range</th>
+            <th>gender</th>
             <th>total_pax</th>
+            <th>total_spend</th>
+            <th>total_visit</th>
+            <th>last_visit</th>
+            <th>nat</th>
             @foreach($flatTags as $tag)
                 <th>{{ $tag->abbreviation ?: strtolower(str_replace(' ', '_', $tag->name)) }}</th>
             @endforeach
@@ -1425,24 +1429,37 @@
     <tbody>
         @foreach($allFilteredBookings as $booking)
         @php
-            $ownedTags = $booking->tags->pluck('name')->toArray();
-            $hasTag = fn($tagName) => in_array($tagName, $ownedTags) ? 1 : 0;
+            $ownedTagIds = $booking->tags->pluck('id')->toArray();
+            $hasTag = fn($tagId) => in_array($tagId, $ownedTagIds) ? 1 : 0;
             $customer = $booking->customer;
         @endphp
         <tr>
+            @php
+                $startDate = $booking->start_time ? \Carbon\Carbon::parse($booking->start_time) : null;
+                $dayMap = ['SUN'=>'SUN', 'MON'=>'MON', 'TUE'=>'TUES', 'WED'=>'WED', 'THU'=>'THUR', 'FRI'=>'FRI', 'SAT'=>'SAT'];
+                $dayShort = $startDate ? strtoupper($startDate->format('D')) : '';
+                $dayDisplay = isset($dayMap[$dayShort]) ? $dayMap[$dayShort] : $dayShort;
+                
+                $totalSpend = (int) (($customer->total_spending ?? 0) + ($customer->bookings ? $customer->bookings->sum('billed_price') : 0));
+                $formattedSpend = "Rp " . number_format($totalSpend, 0, ',', '.');
+                
+                $totalVisits = ($customer->total_visits ?? 0) + ($customer->bookings ? $customer->bookings->unique('start_time')->count() : 0);
+            @endphp
+            <td>{{ $startDate ? $startDate->format('d/m/Y') : '' }}</td>
+            <td>{{ $dayDisplay }}</td>
+            <td>{{ $startDate ? $startDate->format('H:i') : '' }}</td>
+            <td>{{ $booking->end_time ? \Carbon\Carbon::parse($booking->end_time)->format('H:i') : '' }}</td>
             <td>{{ $customer->name ?? 'N/A' }}</td>
             <td>{{ $customer->phone ?? 'N/A' }}</td>
-            <td>{{ strtoupper($customer->gender ?: 'MALE') }}</td>
             <td>{{ $customer->age ?? '' }}</td>
-            <td>{{ $customer->nat ?? 'INA' }}</td>
-            <td>Rp {{ number_format($booking->billed_price, 0, ',', '.') }}</td>
-            <td>1</td>
-            <td>{{ $booking->start_time ? $booking->start_time->format('Y-m-d') : '' }}</td>
-            <td>{{ $booking->start_time ? $booking->start_time->format('H:i') : '' }}</td>
-            <td>{{ $booking->end_time ? $booking->end_time->format('H:i') : '' }}</td>
+            <td>{{ strtoupper($customer->gender ?: 'MALE') }}</td>
             <td>{{ $booking->pax }}</td>
+            <td>{{ $formattedSpend }}</td>
+            <td>{{ $totalVisits }}</td>
+            <td>{{ $customer->last_visit ? \Carbon\Carbon::parse($customer->last_visit)->format('d/m/Y') : '' }}</td>
+            <td>{{ $customer->nat ?? 'INA' }}</td>
             @foreach($flatTags as $tag)
-                <td>{{ $hasTag($tag->name) }}</td>
+                <td>{{ $hasTag($tag->id) }}</td>
             @endforeach
             <td>{{ $booking->status }}</td>
         </tr>

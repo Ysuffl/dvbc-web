@@ -94,11 +94,11 @@ class CustomerController extends Controller
         ->orderBy('name')
         ->get();
 
-        $allMasterTags = MasterTag::all();
+        $allMasterTags = MasterTag::orderBy('master_tag_group_id')->orderBy('id')->get();
         
         $header = [
-            'name', 'phone', 'gender', 'age_range', 'nat', 'total_spend', 'total_visit', 
-            'date', 'time_in', 'time_out', 'total_pax'
+            'date', 'day', 'time_in', 'time_out', 'name', 'phone', 'age_range', 'gender', 'total_pax', 
+            'total_spend', 'total_visit', 'last_visit', 'nat'
         ];
         
         foreach ($allMasterTags as $tag) {
@@ -111,7 +111,7 @@ class CustomerController extends Controller
         foreach ($customers as $customer) {
             $ownedTagIds = [];
             $latestBooking = null;
-            if ($customer->bookings) {
+            if ($customer->bookings && $customer->bookings->count() > 0) {
                 $latestBooking = $customer->bookings->sortByDesc('start_time')->first();
                 foreach($customer->bookings as $b) {
                     if ($b->tags) {
@@ -128,20 +128,30 @@ class CustomerController extends Controller
             };
 
             $totalSpend = (int) ($customer->total_spending + ($customer->bookings ? $customer->bookings->sum('billed_price') : 0));
-            $formattedSpend = "Rp " . number_format($totalSpend, 0, ',', '.');
+            $formattedSpend = "Rp " . number_format($totalSpend, 0, ',', '.'); 
+
+
+            $startDate = $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time) : null;
+            
+            // Day map to match "TUES" in image
+            $dayMap = ['SUN'=>'SUN', 'MON'=>'MON', 'TUE'=>'TUES', 'WED'=>'WED', 'THU'=>'THUR', 'FRI'=>'FRI', 'SAT'=>'SAT'];
+            $dayShort = $startDate ? strtoupper($startDate->format('D')) : '';
+            $dayDisplay = isset($dayMap[$dayShort]) ? $dayMap[$dayShort] : $dayShort;
 
             $row = [
+                $startDate ? $startDate->format('d/m/Y') : '',
+                $dayDisplay,
+                $startDate ? $startDate->format('H:i') : '',
+                $latestBooking ? \Carbon\Carbon::parse($latestBooking->end_time)->format('H:i') : '',
                 $customer->name,
                 $customer->phone,
-                strtoupper($customer->gender ?: 'MALE'),
                 $customer->age ?: '',
-                $customer->nat ?: 'INA',
+                strtoupper($customer->gender ?: 'MALE'),
+                $latestBooking ? $latestBooking->pax : 1,
                 $formattedSpend,
                 $customer->total_visits ?: ($customer->visits_count ?? 0),
-                $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('Y-m-d') : '',
-                $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('H:i') : '',
-                $latestBooking ? \Carbon\Carbon::parse($latestBooking->end_time)->format('H:i') : '',
-                $latestBooking ? $latestBooking->pax : 1
+                $customer->last_visit ? \Carbon\Carbon::parse($customer->last_visit)->format('d/m/Y') : '',
+                $customer->nat ?: 'INA',
             ];
             
             foreach ($allMasterTags as $tag) {
