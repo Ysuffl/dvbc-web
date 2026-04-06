@@ -6,12 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Table;
 use App\Models\MasterTag;
-use App\Models\Customer;
-use App\Models\MasterCategory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Customer;
 class AdminDashboardController extends Controller
 {
     public function index(Request $request)
@@ -97,20 +95,6 @@ class AdminDashboardController extends Controller
         if ($request->filled('status')) {
             $statusFilter = strtolower($request->get('status'));
             $recentBookingsQuery->whereRaw('LOWER(CAST(status AS TEXT)) = ?', [$statusFilter]);
-        }
-
-        if ($request->filled('category')) {
-            $category = strtolower($request->get('category'));
-
-            $categoryMap = [
-                'regular' => 'reguler',
-                'priority' => 'prioritas',
-                'big spender' => 'big_spender',
-            ];
-
-            $dbCategory = $categoryMap[$category] ?? str_replace(' ', '_', $category);
-
-            $recentBookingsQuery->whereRaw('CAST(category AS TEXT) ILIKE ?', [$dbCategory]);
         }
 
         $period = $request->get('period', 'this_week');
@@ -218,20 +202,12 @@ class AdminDashboardController extends Controller
         }) + Customer::sum('total_spending'),
         ];
 
-        // Category breakdown (filtered & unique)
-        $categoryStats = [];
-        foreach ($uniqueStatsGroups as $g) {
-            $cat = strtoupper($g['first']->category ?? 'REGULER');
-            $categoryStats[$cat] = ($categoryStats[$cat] ?? 0) + 1;
-        }
 
         $allTables = Table::orderBy('code')->get();
         $customers = Customer::orderBy('name')->get();
 
-        $categoryMap = MasterCategory::all()
-            ->keyBy(fn($c) => strtoupper($c->name));
 
-        $tags = MasterTag::all()->groupBy('group_name');
+        $tags = MasterTag::with('group')->get()->groupBy(fn($tag) => $tag->group->name);
 
         $allActiveBookings = Booking::whereNotIn(DB::raw('LOWER(CAST(status AS TEXT))'), ['cancelled', 'hold', 'completed', 'billed', 'ok', 'finished', 'done', 'paid'])
             ->where('end_time', '>', now())
@@ -239,8 +215,8 @@ class AdminDashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'tables', 'recentBookings', 'stats', 'floors', 'selectedFloor',
-            'allTables', 'categoryStats', 'listTotals', 'allFilteredBookings',
-            'customers', 'categoryMap', 'tags', 'allActiveBookings'
+            'allTables', 'listTotals', 'allFilteredBookings',
+            'customers', 'tags', 'allActiveBookings'
         ));
     }
 
@@ -249,10 +225,10 @@ class AdminDashboardController extends Controller
         $validated = $request->validate([
             'table_id' => 'required|exists:tables,id',
             'customer_name' => 'required|string|max:255',
-            'customer_category' => 'required|string',
             'phone' => 'nullable|string',
             'age' => 'nullable|string|max:20',
             'gender' => 'nullable|string',
+            'nat' => 'nullable|string|max:10',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
@@ -262,14 +238,6 @@ class AdminDashboardController extends Controller
         ]);
 
         \Log::info('New Booking Attempt:', ['data' => $validated]);
-
-        $categoryMap = [
-            'REGULAR' => 'reguler',
-            'PRIORITY' => 'prioritas',
-            'BIG SPENDER' => 'big_spender',
-        ];
-
-        $dbCategory = $categoryMap[$validated['customer_category'] ?? ''] ?? str_replace(' ', '_', strtolower($validated['customer_category'] ?? 'reguler'));
 
         // Overlap Check (Ignore Cancelled/Hold and Expired bookings)
         $now = now();
@@ -290,14 +258,16 @@ class AdminDashboardController extends Controller
             [
                 'name' => $validated['customer_name'],
                 'age' => $validated['age'] ?? null,
-                'gender' => $validated['gender'] ?? null
+                'gender' => $validated['gender'] ?? null,
+                'nat' => $validated['nat'] ?? null,
             ]
         );
 
         // Update profile if changed
         $customer->update([
             'age' => $validated['age'] ?? $customer->age,
-            'gender' => $request->gender ?? $customer->gender
+            'gender' => $request->gender ?? $customer->gender,
+            'nat' => $validated['nat'] ?? $customer->nat,
         ]);
 
         try {
@@ -309,7 +279,7 @@ class AdminDashboardController extends Controller
                 'end_time' => $validated['end_time'],
                 'notes' => $validated['notes'],
                 'status' => 'pending',
-                'category' => $dbCategory
+                'category' => 'reguler'
             ]);
 
             if ($request->has('tag_ids')) {
@@ -328,10 +298,10 @@ class AdminDashboardController extends Controller
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'customer_category' => 'required|string',
             'phone' => 'nullable|string',
             'age' => 'nullable|integer',
             'gender' => 'nullable|string',
+            'nat' => 'nullable|string|max:10',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
@@ -344,17 +314,11 @@ class AdminDashboardController extends Controller
         $booking = Booking::findOrFail($id);
         
         // Update Customer
-        $categoryMap = [
-            'REGULAR' => 'reguler',
-            'PRIORITY' => 'prioritas',
-            'BIG SPENDER' => 'big_spender',
-        ];
-        $dbCategory = $categoryMap[$validated['customer_category']] ?? str_replace(' ', '_', strtolower($validated['customer_category']));
-
         $booking->customer->update([
             'name' => $validated['customer_name'],
             'age' => $validated['age'] ?? null,
             'gender' => $validated['gender'] ?? null,
+            'nat' => $validated['nat'] ?? $booking->customer->nat,
             'phone' => $validated['phone'] ?? $booking->customer->phone
         ]);
 
@@ -365,7 +329,6 @@ class AdminDashboardController extends Controller
             'end_time' => $validated['end_time'],
             'notes' => $validated['notes'],
             'status' => strtolower($validated['status']),
-            'category' => $dbCategory
         ]);
 
         if ($request->has('tag_ids')) {
@@ -400,6 +363,7 @@ class AdminDashboardController extends Controller
             'phone' => 'nullable|string',
             'age' => 'nullable|integer',
             'gender' => 'nullable|string',
+            'nat' => 'nullable|string|max:10',
             'pax' => 'required|integer|min:1',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
@@ -413,7 +377,8 @@ class AdminDashboardController extends Controller
             [
                 'name' => $validated['customer_name'],
                 'age' => $validated['age'] ?? null,
-                'gender' => $validated['gender'] ?? null
+                'gender' => $validated['gender'] ?? null,
+                'nat' => $validated['nat'] ?? null,
             ]
         );
 

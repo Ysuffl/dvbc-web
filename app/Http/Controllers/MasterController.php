@@ -3,56 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\MasterCategory;
 use App\Models\MasterLevel;
 use App\Models\BroadcastTemplate;
+use App\Models\MasterTag;
+use App\Models\MasterTagGroup;
 
 class MasterController extends Controller
 {
     public function index()
     {
-        $categories = MasterCategory::all();
         $levels = MasterLevel::orderBy('min_spending', 'asc')->get();
         $templates = BroadcastTemplate::orderBy('created_at', 'desc')->get();
-        $tags = \App\Models\MasterTag::orderBy('group_name', 'asc')->orderBy('name', 'asc')->get();
-        return view('admin.master', compact('categories', 'levels', 'templates', 'tags'));
+        $tagGroups = MasterTagGroup::orderBy('name', 'asc')->get();
+        $tags = MasterTag::with('group')->orderBy('master_tag_group_id')->orderBy('name', 'asc')->get();
+        return view('admin.master', compact('levels', 'templates', 'tags', 'tagGroups'));
     }
 
-    // --- Category Methods ---
-    public function storeCategory(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|unique:master_categories,name',
-            'icon' => 'nullable|string',
-            'bg_color' => 'nullable|string',
-            'text_color' => 'nullable|string',
-        ]);
-        $validated['name'] = strtoupper(str_replace(' ', '_', $validated['name']));
 
-        MasterCategory::create($validated);
-        return redirect()->back()->with('success', 'Category added successfully');
-    }
-
-    public function updateCategory(Request $request, $id)
-    {
-        $category = MasterCategory::findOrFail($id);
-        $validated = $request->validate([
-            'name' => 'required|string|unique:master_categories,name,' . $id,
-            'icon' => 'nullable|string',
-            'bg_color' => 'nullable|string',
-            'text_color' => 'nullable|string',
-        ]);
-        $validated['name'] = strtoupper(str_replace(' ', '_', $validated['name']));
-
-        $category->update($validated);
-        return redirect()->back()->with('success', 'Category updated successfully');
-    }
-
-    public function destroyCategory($id)
-    {
-        MasterCategory::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Category deleted successfully');
-    }
 
     // --- Level Methods ---
     public function storeLevel(Request $request)
@@ -127,24 +94,25 @@ class MasterController extends Controller
         return redirect()->back()->with('success', 'Template deleted successfully');
     }
 
-    // --- Tag Methods ---
     public function storeTag(Request $request)
     {
         $validated = $request->validate([
-            'group_name' => 'required|string|max:255',
+            'master_tag_group_id' => 'required|exists:master_tag_groups,id',
             'name' => 'required|string|max:255',
+            'abbreviation' => 'nullable|string|max:20',
         ]);
         
-        \App\Models\MasterTag::create($validated);
+        MasterTag::create($validated);
         return redirect()->back()->with('success', 'Tag created successfully');
     }
 
     public function updateTag(Request $request, $id)
     {
-        $tag = \App\Models\MasterTag::findOrFail($id);
+        $tag = MasterTag::findOrFail($id);
         $validated = $request->validate([
-            'group_name' => 'required|string|max:255',
+            'master_tag_group_id' => 'required|exists:master_tag_groups,id',
             'name' => 'required|string|max:255',
+            'abbreviation' => 'nullable|string|max:20',
         ]);
         
         $tag->update($validated);
@@ -153,7 +121,33 @@ class MasterController extends Controller
 
     public function destroyTag($id)
     {
-        \App\Models\MasterTag::findOrFail($id)->delete();
+        MasterTag::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Tag deleted successfully');
+    }
+
+    // --- Group Tag Methods ---
+    public function storeGroup(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:50|unique:master_tag_groups,name',
+        ]);
+        MasterTagGroup::create($validated);
+        return redirect()->back()->with('success', 'Tag Group created successfully');
+    }
+
+    public function updateGroup(Request $request, $id)
+    {
+        $group = MasterTagGroup::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:50|unique:master_tag_groups,name,' . $id,
+        ]);
+        $group->update($validated);
+        return redirect()->back()->with('success', 'Tag Group updated successfully');
+    }
+
+    public function destroyGroup($id)
+    {
+        MasterTagGroup::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Tag Group deleted successfully');
     }
 }

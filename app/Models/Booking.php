@@ -10,7 +10,7 @@ class Booking extends Model
 
     protected $fillable = [
         'table_id', 'customer_id', 'pax', 'start_time', 'end_time', 'billed_at', 
-        'status', 'category', 'notes', 'cancel_reason', 'billed_price'
+        'status', 'notes', 'cancel_reason', 'billed_price'
     ];
 
     protected $casts = [

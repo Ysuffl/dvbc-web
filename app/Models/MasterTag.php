@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class MasterTag extends Model
 {
-    protected $fillable = ['group_name', 'name', 'font_size'];
+    protected $fillable = ['master_tag_group_id', 'name', 'abbreviation'];
+
+    public function group()
+    {
+        return $this->belongsTo(MasterTagGroup::class, 'master_tag_group_id');
+    }
 
     public function bookings()
     {

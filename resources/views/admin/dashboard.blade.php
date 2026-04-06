@@ -2,14 +2,7 @@
 
 @section('content')
 @php
-    $categories = [
-        'REGULER' => ['icon' => 'user', 'color' => 'text-blue-500'],
-        'PRIORITAS' => ['icon' => 'zap', 'color' => 'text-amber-500'],
-        'EVENT' => ['icon' => 'calendar', 'color' => 'text-emerald-500'],
-        'BIG_SPENDER' => ['icon' => 'gem', 'color' => 'text-rose-500'],
-        'PARTY' => ['icon' => 'music', 'color' => 'text-purple-500'],
-        'FAMILY' => ['icon' => 'users', 'color' => 'text-indigo-500'],
-    ];
+
 
     $periodLabels = [
         'today' => 'Today', 
@@ -28,7 +21,99 @@
 @endphp
 
 <div class="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000"
-    x-data="{ showBookingModal: false, showEventModal: false, showInfoModal: false, showEditBookingModal: false, selectedBooking: null, editBookingData: { customer: {} } }">
+    x-data="{ 
+        showBookingModal: false, 
+        showEventModal: false, 
+        showInfoModal: false, 
+        showEditBookingModal: false, 
+        selectedBooking: null, 
+        editBookingData: { customer: {} },
+        customerSearch: '', 
+        searchResults: [], 
+        selectedCustomer: null, 
+        allCustomers: {{ Js::from($customers) }},
+        allTables: {{ Js::from($allTables) }},
+        selectedTableId: '',
+        get selectedTable() { return this.allTables.find(t => t.id == this.selectedTableId) },
+        activeBookings: {{ Js::from($allActiveBookings) }},
+        lockedTableIds: [],
+        eventStartTime: '',
+        eventEndTime: '',
+        
+        filterCustomers() {
+            if (this.customerSearch.length < 2) {
+                this.searchResults = [];
+                return;
+            }
+            const q = this.customerSearch.toLowerCase();
+            this.searchResults = this.allCustomers.filter(c => 
+                (c.name && c.name.toLowerCase().includes(q)) || 
+                (c.phone && c.phone.includes(q))
+            ).slice(0, 8);
+        },
+
+        selectCustomer(c) {
+            this.selectedCustomer = c;
+            this.customerSearch = c.name;
+            this.searchResults = [];
+            if (this.$refs.phoneInput) this.$refs.phoneInput.value = c.phone || '';
+            if (this.$refs.ageInput) this.$refs.ageInput.value = c.age || '';
+            if (this.$refs.genderSelect) this.$refs.genderSelect.value = c.gender || '';
+            if (this.$refs.natSelect && c.nat) {
+                this.$refs.natSelect.value = c.nat;
+            }
+        },
+
+        clearCustomer() {
+            if (this.selectedCustomer && this.customerSearch !== this.selectedCustomer.name) {
+                this.selectedCustomer = null;
+            }
+        },
+
+        checkAvailability() {
+            if (!this.eventStartTime || !this.eventEndTime) {
+                this.lockedTableIds = [];
+                return;
+            }
+            try {
+                const start = new Date(this.eventStartTime.replace(' ', 'T')).getTime();
+                const end = new Date(this.eventEndTime.replace(' ', 'T')).getTime();
+                if (isNaN(start) || isNaN(end)) {
+                    this.lockedTableIds = [];
+                    return;
+                }
+                const locked = new Set();
+                this.activeBookings.forEach(b => {
+                    const bStart = new Date(b.start_time.replace(' ', 'T')).getTime();
+                    const bEnd = new Date(b.end_time.replace(' ', 'T')).getTime();
+                    if (!isNaN(bStart) && !isNaN(bEnd) && bStart < end && bEnd > start) {
+                        locked.add(b.table_id);
+                    }
+                });
+                this.lockedTableIds = Array.from(locked);
+            } catch (e) {
+                console.error('Error checking availability:', e);
+                this.lockedTableIds = [];
+            }
+        },
+
+        resetForm() {
+            this.customerSearch = '';
+            this.searchResults = [];
+            this.selectedCustomer = null;
+            this.eventStartTime = '';
+            this.eventEndTime = '';
+            this.lockedTableIds = [];
+            if (this.$refs.bookingForm) this.$refs.bookingForm.reset();
+            if (this.$refs.eventForm) {
+                this.$refs.eventForm.reset();
+                const fpStart = this.$refs.eventForm.querySelector('input[name=\'start_time\']');
+                const fpEnd = this.$refs.eventForm.querySelector('input[name=\'end_time\']');
+                if (fpStart && fpStart._flatpickr) fpStart._flatpickr.clear();
+                if (fpEnd && fpEnd._flatpickr) fpEnd._flatpickr.clear();
+            }
+        }
+    }">
     
     <!-- Hero Section / Top Stats -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-10">
@@ -101,10 +186,6 @@
                     $statusClass = "{$cfg['bg']} {$cfg['text']} {$cfg['border']} {$cfg['shadow']}";
 
                     $currentBooking = $table->bookings->first();
-                    $category = $currentBooking && $currentBooking->customer ? strtolower($currentBooking->category) : null;
-                    if (!$currentBooking && $status === 'hold' && $table->holdByCustomer) {
-                        $category = strtolower($table->holdByCustomer->category);
-                    }
                 @endphp
                 <div class="{{ $baseStyles }} {{ $statusClass }}"
                     @if($currentBooking) @click="selectedBooking = { 
@@ -117,7 +198,7 @@
                         table_model: { code: '{{ $table->code }}' },
                         customer: { 
                             name: '{{ addslashes($currentBooking->customer->name ?? 'Unknown') }}', 
-                            category: '{{ $currentBooking->category ?? 'REGULAR' }}', 
+                            nat: '{{ $currentBooking->customer->nat ?? '' }}', 
                             phone: '{{ $currentBooking->customer->phone ?? 'N/A' }}',
                             age: '{{ $currentBooking->customer->age }}',
                             gender: '{{ $currentBooking->customer->gender }}'
@@ -133,45 +214,13 @@
                         table_model: { code: '{{ $table->code }}' },
                         customer: {
                             name: '{{ addslashes($table->holdByCustomer->name ?? 'Unknown') }}',
-                            category: '{{ $table->holdByCustomer->category ?? 'REGULER' }}',
+                            nat: '{{ $table->holdByCustomer->nat ?? '' }}',
                             phone: '{{ $table->holdByCustomer->phone ?? 'N/A' }}',
                             age: '{{ $table->holdByCustomer->age ?? '' }}',
                             gender: '{{ $table->holdByCustomer->gender ?? '' }}'
                         }
                     }; showInfoModal = true" @endif>
                     {{ $table->code }}
-
-                    @if($category)
-                    <div class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center bg-white shadow-lg border border-stone-100 scale-90">
-                        @php
-                            $catIcon = match($category) {
-                                'priority' => 'crown',
-                                'event' => 'megaphone',
-                                'big spender' => 'dollar-sign',
-                                'drinker' => 'glass-water',
-                                'party' => 'sparkles',
-                                'dinner' => 'utensils-crossed',
-                                'lunch' => 'utensils',
-                                'family' => 'users',
-                                'youngster' => 'smile',
-                                default => 'user'
-                            };
-                            $catColor = match($category) {
-                                'priority' => 'text-amber-500',
-                                'event' => 'text-indigo-500',
-                                'big spender' => 'text-emerald-500',
-                                'drinker' => 'text-blue-500',
-                                'party' => 'text-purple-500',
-                                'dinner' => 'text-orange-500',
-                                'lunch' => 'text-rose-500',
-                                'family' => 'text-cyan-500',
-                                'youngster' => 'text-pink-500',
-                                default => 'text-stone-400'
-                            };
-                        @endphp
-                        <i data-lucide="{{ $catIcon }}" class="w-3.5 h-3.5 {{ $catColor }}"></i>
-                    </div>
-                    @endif
                 </div>
                 @endforeach
             </div>
@@ -283,29 +332,7 @@
                 </div>
             </div>
 
-            <!-- Segments -->
-            <div class="mt-12 space-y-6">
-                <div class="flex items-center gap-4">
-                    <span class="text-[10px] font-black text-stone-300 uppercase tracking-[0.4em]">Segmentation</span>
-                    <div class="h-px bg-stone-100 flex-1"></div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    @foreach($categories as $key => $style)
-                    <div class="p-3.5 rounded-lg bg-stone-50 border border-stone-100 hover:border-brand-primary/20 hover:bg-white hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-300 group cursor-default">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-md bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-                                <i data-lucide="{{ $style['icon'] }}" class="w-4.5 h-4.5 {{ $style['color'] }}"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-black text-stone-900 leading-none mb-1.5">{{ $categoryStats[$key] ?? 0 }}</p>
-                                <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest truncate">{{ str_replace('_', ' ', $key) }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
+
         </div>
     </div>
 
@@ -348,7 +375,7 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <input type="hidden" name="period" value="{{ request('period', 'this_week') }}" id="periodInput">
                         <input type="hidden" name="status" value="{{ request('status') }}" id="statusInput">
-                        <input type="hidden" name="category" value="{{ request('category') }}" id="categoryInput">
+
                         <input type="hidden" name="sort" value="{{ request('sort', 'desc') }}" id="sortInput">
 
                         <div class="relative" x-data="{ open: false, showCustom: {{ request('period') == 'custom' ? 'true' : 'false' }} }">
@@ -361,7 +388,6 @@
                                     $activeFilters = 0;
                                     if(request('period') && request('period') != 'this_week') $activeFilters++;
                                     if(request('status')) $activeFilters++;
-                                    if(request('category')) $activeFilters++;
                                 @endphp
                                 
                                 @if($activeFilters > 0)
@@ -450,19 +476,6 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                        <div class="space-y-4">
-                                                            <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
-                                                                <i data-lucide="layers" class="w-4 h-4 text-brand-primary"></i> Guest Category
-                                                            </h3>
-                                                            <select onchange="document.getElementById('categoryInput').value = this.value; document.getElementById('bookingFilterForm').submit()"
-                                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all text-stone-800 uppercase tracking-tight">
-                                                                <option value="">Filter by Category</option>
-                                                                @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                                                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
                                                         <div class="space-y-4">
                                                             <h3 class="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest flex items-center gap-3">
                                                                 <i data-lucide="arrow-up-down" class="w-4 h-4 text-brand-primary"></i> Sort Order
@@ -516,11 +529,7 @@
                                                             {{ ucfirst(request('status')) }}
                                                         </span>
                                                     @endif
-                                                    @if(request('category'))
-                                                        <span class="px-4 py-2 bg-emerald-50 text-emerald-600 text-[11px] font-black rounded-md border-2 border-emerald-100 flex items-center gap-2">
-                                                            {{ request('category') }}
-                                                        </span>
-                                                    @endif
+
                                                 </div>
                                             </div>
                                             
@@ -555,7 +564,7 @@
                             <tr class="bg-stone-50/50">
                                 <th class="py-6 px-10 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Guest</th>
                                 <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Profile</th>
-                                <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Category</th>
+                                <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">NAT</th>
                                 <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Table</th>
                                 <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Pax</th>
                                 <th class="py-6 px-4 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] border-b border-stone-100">Schedule</th>
@@ -590,27 +599,9 @@
                                     </div>
                                 </td>
                                 <td class="py-8 px-4">
-                                    @php
-                                        $cat = strtoupper($booking->category ?? 'REGULER');
-                                        $catDisplay = match ($cat) {
-                                            'REGULER' => 'REGULAR',
-                                            'PRIORITAS' => 'PRIORITY',
-                                            'BIG_SPENDER' => 'BIG SPENDER',
-                                            default => str_replace('_', ' ', $cat)
-                                        };
-                                        $catData = $categoryMap[$cat] ?? $categoryMap[$catDisplay] ?? null;
-                                        $catIcon = $catData?->icon ?? 'tag';
-                                        $catColor = match($cat) {
-                                            'PRIORITY', 'PRIORITAS' => 'bg-amber-50 text-amber-600 border-amber-100',
-                                            'BIG SPENDER', 'BIG_SPENDER' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                            'EVENT' => 'bg-indigo-50 text-indigo-600 border-indigo-100',
-                                            default => 'bg-stone-50 text-stone-400 border-stone-100'
-                                        };
-                                    @endphp
-                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 {{ $catColor }} rounded-md border text-[9px] font-black uppercase tracking-widest">
-                                        <i data-lucide="{{ $catIcon }}" class="w-3 h-3"></i>
-                                        {{ $catDisplay }}
-                                    </div>
+                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-50 text-stone-500 border border-stone-100 rounded-md text-[9px] font-black uppercase tracking-widest">
+                                        {{ $booking->customer->nat ?? '—' }}
+                                    </span>
                                 </td>
                                 <td class="py-8 px-4">
                                     <span class="px-3 py-1.5 bg-stone-900 text-white rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-stone-200">
@@ -627,7 +618,7 @@
                                     <div class="space-y-2">
                                         <div class="flex items-center gap-2 text-stone-500 mb-1">
                                             <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-brand-primary opacity-50"></i>
-                                            <span class="text-[10px] font-black uppercase tracking-widest">{{ $booking->start_time ? $booking->start_time->format('d M Y') : 'N/A' }}</span>
+                                            <span class="text-[10px] font-black uppercase tracking-widest">{{ $booking->start_time ? $booking->start_time->format('D, d M Y') : 'N/A' }}</span>
                                         </div>
                                         <div class="space-y-1 pl-1">
                                             <div class="flex items-center gap-2">
@@ -643,7 +634,7 @@
                                 </td>
                                 <td class="py-8 px-4 text-right">
                                     <span class="text-sm font-black text-stone-900 tabular-nums">
-                                        {{ number_format($booking->billed_price, 0, ',', '.') }}
+                                        Rp {{ number_format($booking->billed_price, 0, ',', '.') }}
                                     </span>
                                 </td>
                                 <td class="py-8 px-10 text-right">
@@ -717,8 +708,6 @@
                 <div class="px-10 pb-12 mt-6">
                     {{ $recentBookings->appends(request()->query())->links('components.pagination') }}
                 </div>
-        </div>
-        </div>
 
         <div x-show="showEventModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak></div>
 
@@ -739,52 +728,7 @@
                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 class="inline-block align-bottom bg-white/90 backdrop-blur-2xl rounded-xl p-1 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-white/20">
                 
-                <div class="bg-white rounded-lg p-10" x-data="{ 
-                     customerSearch: '', 
-                     searchResults: [], 
-                     selectedCustomer: null,
-                     allCustomers: [],
-                    allTables: {{ Js::from($allTables) }},
-                    selectedTableId: '',
-                    get selectedTable() { return this.allTables.find(t => t.id == this.selectedTableId) },
-                    
-                    filterCustomers() {
-                        if (this.customerSearch.length < 2) {
-                            this.searchResults = [];
-                            return;
-                        }
-                        const q = this.customerSearch.toLowerCase();
-                        this.searchResults = this.allCustomers.filter(c => 
-                            (c.name && c.name.toLowerCase().includes(q)) || 
-                            (c.phone && c.phone.includes(q))
-                        ).slice(0, 8);
-                    },
-
-                    selectCustomer(c) {
-                        this.selectedCustomer = c;
-                        this.customerSearch = c.name;
-                        this.searchResults = [];
-                        if (this.$refs.phoneInput) this.$refs.phoneInput.value = c.phone || '';
-                        if (this.$refs.ageInput) this.$refs.ageInput.value = c.age || '';
-                        if (this.$refs.genderSelect) this.$refs.genderSelect.value = c.gender || '';
-                        if (this.$refs.categorySelect && c.category) {
-                            this.$refs.categorySelect.value = c.category.toUpperCase();
-                        }
-                    },
-
-                    clearCustomer() {
-                        if (this.selectedCustomer && this.customerSearch !== this.selectedCustomer.name) {
-                            this.selectedCustomer = null;
-                        }
-                    },
-
-                    resetForm() {
-                        this.customerSearch = '';
-                        this.searchResults = [];
-                        this.selectedCustomer = null;
-                        if (this.$refs.bookingForm) this.$refs.bookingForm.reset();
-                    }
-                }" x-init="allCustomers = {{ Js::from($customers) }}">
+                <div class="bg-white rounded-lg p-10">
                     
                     <div class="flex justify-between items-start mb-12">
                         <div>
@@ -886,19 +830,13 @@
                             <!-- Details -->
                             <div class="space-y-6">
                                 <div>
-                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Category</label>
-                                    <select name="customer_category" required x-ref="categorySelect"
+                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Nationality (NAT)</label>
+                                    <select name="nat" x-ref="natSelect"
                                         class="w-full px-6 py-5 bg-stone-50 border border-stone-100 rounded-md text-xs font-black focus:ring-4 focus:ring-brand-primary/5 focus:bg-white focus:border-brand-primary/30 transition-all outline-none uppercase tracking-widest appearance-none cursor-pointer">
-                                        <option value="REGULAR">REGULAR</option>
-                                        <option value="PRIORITY">PRIORITY</option>
-                                        <option value="EVENT">EVENT</option>
-                                        <option value="BIG SPENDER">BIG SPENDER</option>
-                                        <option value="DRINKER">DRINKER</option>
-                                        <option value="PARTY">PARTY</option>
-                                        <option value="DINNER">DINNER</option>
-                                        <option value="LUNCH">LUNCH</option>
-                                        <option value="FAMILY">FAMILY</option>
-                                        <option value="YOUNGSTER">YOUNGSTER</option>
+                                        <option value="">-- SELECT NAT --</option>
+                                        @foreach(['INA', 'CHD', 'ASIA', 'AUS', 'AFR', 'CHN', 'EUR', 'IND', 'UEA', 'USA'] as $nat)
+                                        <option value="{{ $nat }}">{{ $nat }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -1015,85 +953,7 @@
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     class="inline-block align-bottom bg-white/95 backdrop-blur-2xl rounded-[2.5rem] p-1 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-white/20">
                     
-                    <div class="bg-white rounded-[2.3rem] p-10" x-data="{ 
-                        customerSearch: '', 
-                        searchResults: [], 
-                        selectedCustomer: null,
-                        allCustomers: [],
-                        activeBookings: [],
-                        lockedTableIds: [],
-                        eventStartTime: '',
-                        eventEndTime: '',
-                        
-                        filterCustomers() {
-                            if (this.customerSearch.length < 2) {
-                                this.searchResults = [];
-                                return;
-                            }
-                            const q = this.customerSearch.toLowerCase();
-                            this.searchResults = this.allCustomers.filter(c => 
-                                (c.name && c.name.toLowerCase().includes(q)) || 
-                                (c.phone && c.phone.includes(q))
-                            ).slice(0, 8);
-                        },
-
-                        selectCustomer(c) {
-                            this.selectedCustomer = c;
-                            this.customerSearch = c.name;
-                            this.searchResults = [];
-                            if ($refs.phoneInput) $refs.phoneInput.value = c.phone || '';
-                            if ($refs.ageInput) $refs.ageInput.value = c.age || '';
-                        },
-
-                        clearCustomer() {
-                            if (this.selectedCustomer && this.customerSearch !== this.selectedCustomer.name) {
-                                this.selectedCustomer = null;
-                            }
-                        },
-
-                        checkAvailability() {
-                            if (!this.eventStartTime || !this.eventEndTime) {
-                                this.lockedTableIds = [];
-                                return;
-                            }
-                            try {
-                                const start = new Date(this.eventStartTime).getTime();
-                                const end = new Date(this.eventEndTime).getTime();
-                                if (isNaN(start) || isNaN(end)) {
-                                    this.lockedTableIds = [];
-                                    return;
-                                }
-                                const locked = new Set();
-                                this.activeBookings.forEach(b => {
-                                    const bStart = new Date(b.start_time).getTime();
-                                    const bEnd = new Date(b.end_time).getTime();
-                                    if (!isNaN(bStart) && !isNaN(bEnd) && bStart < end && bEnd > start) {
-                                        locked.add(b.table_id);
-                                    }
-                                });
-                                this.lockedTableIds = Array.from(locked);
-                            } catch (e) {
-                                console.error('Error checking availability:', e);
-                                this.lockedTableIds = [];
-                            }
-                        },
-
-                        resetForm() {
-                            this.customerSearch = '';
-                            this.searchResults = [];
-                            this.selectedCustomer = null;
-                            this.eventStartTime = '';
-                            this.eventEndTime = '';
-                            this.lockedTableIds = [];
-                            if (this.$refs.eventForm) {
-                                this.$refs.eventForm.reset();
-                                const fpStart = this.$refs.eventForm.querySelector('input[name=\'start_time\']');
-                                const fpEnd = this.$refs.eventForm.querySelector('input[name=\'end_time\']');
-                                if (fpStart && fpStart._flatpickr) fpStart._flatpickr.clear();
-                                if (fpEnd && fpEnd._flatpickr) fpEnd._flatpickr.clear();
-                            }
-                        }
-                    }" x-init="allCustomers = {{ Js::from($customers) }}; activeBookings = {{ Js::from($allActiveBookings) }}">
+                    <div class="bg-white rounded-[2.3rem] p-10">
                         
                         <div class="flex justify-between items-start mb-12">
                             <div>
@@ -1189,13 +1049,20 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Event Category</label>
-                                    <select name="customer_category" required
+                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Nationality</label>
+                                    <select name="nat"
                                         class="w-full px-6 py-5 bg-stone-50 border border-stone-100 rounded-md text-xs font-black focus:ring-4 focus:ring-brand-primary/5 focus:bg-white focus:border-brand-primary/30 transition-all outline-none uppercase tracking-widest appearance-none cursor-pointer">
-                                        <option value="EVENT">OFFICIAL EVENT</option>
-                                        <option value="PARTY">PRIVATE PARTY</option>
-                                        <option value="DINNER">GALA DINNER</option>
-                                        <option value="BIG SPENDER">VVIP LOUNGE</option>
+                                        <option value="">SELECT NAT</option>
+                                        <option value="INA">INA</option>
+                                        <option value="CHD">CHD</option>
+                                        <option value="ASIA">ASIA</option>
+                                        <option value="AUS">AUS</option>
+                                        <option value="AFR">AFR</option>
+                                        <option value="CHN">CHN</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="IND">IND</option>
+                                        <option value="UEA">UEA</option>
+                                        <option value="USA">USA</option>
                                     </select>
                                 </div>
 
@@ -1333,11 +1200,11 @@
                                     <div class="grid grid-cols-2 gap-4">
                                         <div class="p-5 bg-white rounded-md border border-stone-100/50 shadow-sm">
                                             <label class="block text-[8px] font-black text-stone-300 uppercase tracking-widest mb-1.5">Check In</label>
-                                            <p class="text-[11px] font-black text-stone-900" x-text="selectedBooking.start_time ? new Date(selectedBooking.start_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                            <p class="text-[11px] font-black text-stone-900" x-text="selectedBooking.start_time ? new Date(selectedBooking.start_time).toLocaleString('id-ID', {weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
                                         </div>
                                         <div class="p-5 bg-white rounded-md border border-stone-100/50 shadow-sm">
                                             <label class="block text-[8px] font-black text-stone-300 uppercase tracking-widest mb-1.5">Check Out</label>
-                                            <p class="text-[11px] font-black text-stone-900" x-text="selectedBooking.end_time ? new Date(selectedBooking.end_time).toLocaleString('id-ID', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
+                                            <p class="text-[11px] font-black text-stone-900" x-text="selectedBooking.end_time ? new Date(selectedBooking.end_time).toLocaleString('id-ID', {weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : '-'"></p>
                                         </div>
                                     </div>
                                 </div>
@@ -1360,8 +1227,8 @@
                                         <p class="text-[10px] font-black text-stone-900 uppercase tracking-widest" x-text="selectedBooking.pax + ' PAX'"></p>
                                     </div>
                                     <div class="p-6 bg-stone-50 rounded-md border border-stone-100 text-center">
-                                        <p class="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-1">Category</p>
-                                        <p class="text-[10px] font-black text-stone-900 uppercase tracking-widest" x-text="selectedBooking.customer?.category || 'REGULAR'"></p>
+                                        <p class="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-1">Nationality</p>
+                                        <p class="text-[10px] font-black text-stone-900 uppercase tracking-widest" x-text="selectedBooking.customer?.nat || '-'"></p>
                                     </div>
                                 </div>
 
@@ -1421,12 +1288,20 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Classification</label>
-                                    <select name="customer_category" x-model="editBookingData.customer.category" required 
+                                    <label class="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 ml-1">Nationality</label>
+                                    <select name="nat" x-model="editBookingData.customer.nat"
                                         class="w-full px-6 py-5 bg-stone-50 border border-stone-100 rounded-md text-xs font-black focus:ring-4 focus:ring-brand-primary/5 focus:bg-white focus:border-brand-primary/30 transition-all outline-none uppercase tracking-widest appearance-none cursor-pointer">
-                                        @foreach(['REGULAR', 'PRIORITY', 'EVENT', 'BIG SPENDER', 'DRINKER', 'PARTY', 'DINNER', 'LUNCH', 'FAMILY', 'YOUNGSTER'] as $cat)
-                                            <option value="{{ $cat }}">{{ $cat }}</option>
-                                        @endforeach
+                                        <option value="">SELECT NAT</option>
+                                        <option value="INA">INA</option>
+                                        <option value="CHD">CHD</option>
+                                        <option value="ASIA">ASIA</option>
+                                        <option value="AUS">AUS</option>
+                                        <option value="AFR">AFR</option>
+                                        <option value="CHN">CHN</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="IND">IND</option>
+                                        <option value="UEA">UEA</option>
+                                        <option value="USA">USA</option>
                                     </select>
                                 </div>
 
@@ -1525,6 +1400,7 @@
                 </template>
             </div>
         </div>
+        @php $flatTags = $tags->flatten(); @endphp
 <!-- Hidden table for Export -->
 <table id="export-table" style="display: none;">
     <thead>
@@ -1533,29 +1409,16 @@
             <th>phone</th>
             <th>gender</th>
             <th>age_range</th>
+            <th>nat</th>
             <th>total_spend</th>
             <th>total_visit</th>
             <th>date</th>
             <th>time_in</th>
             <th>time_out</th>
-            <th>toal_pax</th>
-            <th>pu_din</th>
-            <th>pu_fam</th>
-            <th>pu_lunch</th>
-            <th>pu_party</th>
-            <th>pu_celeb</th>
-            <th>pu_comm</th>
-            <th>pu_corp</th>
-            <th>pr_reg</th>
-            <th>pr_ayce</th>
-            <th>pr_aycd</th>
-            <th>pr_alc</th>
-            <th>pr_buff</th>
-            <th>pr_iftar</th>
-            <th>time_wdd</th>
-            <th>time_wdn</th>
-            <th>time_wed</th>
-            <th>time_wen</th>
+            <th>total_pax</th>
+            @foreach($flatTags as $tag)
+                <th>{{ $tag->abbreviation ?: strtolower(str_replace(' ', '_', $tag->name)) }}</th>
+            @endforeach
             <th>status</th>
         </tr>
     </thead>
@@ -1571,35 +1434,24 @@
             <td>{{ $customer->phone ?? 'N/A' }}</td>
             <td>{{ strtoupper($customer->gender ?: 'MALE') }}</td>
             <td>{{ $customer->age ?? '' }}</td>
-            <td>{{ $booking->billed_price }}</td>
+            <td>{{ $customer->nat ?? 'INA' }}</td>
+            <td>Rp {{ number_format($booking->billed_price, 0, ',', '.') }}</td>
             <td>1</td>
             <td>{{ $booking->start_time ? $booking->start_time->format('Y-m-d') : '' }}</td>
             <td>{{ $booking->start_time ? $booking->start_time->format('H:i') : '' }}</td>
             <td>{{ $booking->end_time ? $booking->end_time->format('H:i') : '' }}</td>
             <td>{{ $booking->pax }}</td>
-            <td>{{ $hasTag('Dining') }}</td>
-            <td>{{ $hasTag('Family') }}</td>
-            <td>{{ $hasTag('Lunch') }}</td>
-            <td>{{ $hasTag('Party') }}</td>
-            <td>{{ $hasTag('Celebration') }}</td>
-            <td>{{ $hasTag('Community') }}</td>
-            <td>{{ $hasTag('Corporate') }}</td>
-            <td>{{ $hasTag('Regular F&B') }}</td>
-            <td>{{ $hasTag('AYCE') }}</td>
-            <td>{{ $hasTag('AYCD') }}</td>
-            <td>{{ $hasTag('Alcohol') }}</td>
-            <td>{{ $hasTag('Buffet') }}</td>
-            <td>{{ $hasTag('Iftar Buffet') }}</td>
-            <td>{{ $hasTag('Weekday Day') }}</td>
-            <td>{{ $hasTag('Weekday Night') }}</td>
-            <td>{{ $hasTag('Weekend Day') }}</td>
-            <td>{{ $hasTag('Weekend Night') }}</td>
+            @foreach($flatTags as $tag)
+                <td>{{ $hasTag($tag->name) }}</td>
+            @endforeach
             <td>{{ $booking->status }}</td>
         </tr>
         @endforeach
     </tbody>
 </table>
 </div>
+        </div>
+        </div>
 @endsection
 
 @section('scripts')

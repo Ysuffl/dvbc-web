@@ -73,16 +73,16 @@
                 <nav class="space-y-1.5">
                     @php
                         $navItems = [
-                            ['route' => 'dashboard', 'icon' => 'layout-grid', 'label' => 'Overview', 'admin' => false],
-                            ['route' => 'floor.index', 'icon' => 'layers', 'label' => 'Floor Mapping', 'admin' => true],
-                            ['route' => 'customers', 'icon' => 'users-round', 'label' => 'Customer Hub', 'admin' => false],
-                            ['route' => 'demographics', 'icon' => 'pie-chart', 'label' => 'Performance', 'admin' => true],
-                            ['route' => 'broadcast.index', 'icon' => 'zap', 'label' => 'Broadcast HQ', 'admin' => true],
+                            ['route' => 'dashboard', 'icon' => 'layout-grid', 'label' => 'Overview', 'roles' => ['admin', 'cs', 'staff']],
+                            ['route' => 'floor.index', 'icon' => 'layers', 'label' => 'Floor Mapping', 'roles' => ['admin']],
+                            ['route' => 'customers', 'icon' => 'users-round', 'label' => 'Customer Hub', 'roles' => ['admin', 'cs', 'staff']],
+                            ['route' => 'demographics', 'icon' => 'pie-chart', 'label' => 'Performance', 'roles' => ['admin']],
+                            ['route' => 'broadcast.index', 'icon' => 'zap', 'label' => 'Broadcast HQ', 'roles' => ['admin', 'cs']],
                         ];
                     @endphp
 
                     @foreach($navItems as $item)
-                        @if(!$item['admin'] || auth()->user()->role === 'admin')
+                        @if(in_array(auth()->user()->role, $item['roles']))
                         @php $isActive = request()->routeIs(str_replace('.index', '', $item['route']) . '*'); @endphp
                         <a href="{{ $isActive ? 'javascript:void(0)' : route($item['route']) }}" 
                            class="nav-link group overflow-hidden {{ $isActive ? 'bg-stone-900 text-white shadow-2xl shadow-stone-200' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900' }}">

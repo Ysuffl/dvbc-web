@@ -53,9 +53,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Master Data
         Route::get('/master', [\App\Http\Controllers\MasterController::class, 'index'])->name('master.index');
-        Route::post('/master/categories', [\App\Http\Controllers\MasterController::class, 'storeCategory'])->name('master.category.store');
-        Route::put('/master/categories/{id}', [\App\Http\Controllers\MasterController::class, 'updateCategory'])->name('master.category.update');
-        Route::delete('/master/categories/{id}', [\App\Http\Controllers\MasterController::class, 'destroyCategory'])->name('master.category.destroy');
+
         Route::post('/master/levels', [\App\Http\Controllers\MasterController::class, 'storeLevel'])->name('master.level.store');
         Route::put('/master/levels/{id}', [\App\Http\Controllers\MasterController::class, 'updateLevel'])->name('master.level.update');
         Route::delete('/master/levels/{id}', [\App\Http\Controllers\MasterController::class, 'destroyLevel'])->name('master.level.destroy');
@@ -66,6 +64,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/master/tags/{id}', [\App\Http\Controllers\MasterController::class, 'updateTag'])->name('master.tag.update');
         Route::delete('/master/tags/{id}', [\App\Http\Controllers\MasterController::class, 'destroyTag'])->name('master.tag.destroy');
 
+        Route::post('/master/tag-groups', [\App\Http\Controllers\MasterController::class, 'storeGroup'])->name('master.tag_group.store');
+        Route::put('/master/tag-groups/{id}', [\App\Http\Controllers\MasterController::class, 'updateGroup'])->name('master.tag_group.update');
+        Route::delete('/master/tag-groups/{id}', [\App\Http\Controllers\MasterController::class, 'destroyGroup'])->name('master.tag_group.destroy');
+    });
+
+    // ── Shared Admin & CS Sections ───────────────────────────────────────
+    Route::middleware(['role:admin,cs'])->group(function () {
         // Broadcasting
         Route::get('/broadcast', [\App\Http\Controllers\BroadcastController::class, 'index'])->name('broadcast.index');
         Route::get('/broadcast/status', [\App\Http\Controllers\BroadcastController::class, 'getStatus'])->name('broadcast.status');

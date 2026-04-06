@@ -12,10 +12,11 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone')->nullable();
+            $table->string('phone', 100)->nullable();
 
             $table->string('age', 20)->nullable();
             $table->string('gender', 10)->nullable();
+            $table->string('nat', 10)->nullable(); // NAT = Nationality (INA, CHD, ASIA, AUS, AFR, CHN, EUR, IND, UEA, USA)
 
             // Finansial & Level
             $table->decimal('total_spending', 15, 2)->default(0);
@@ -77,7 +78,7 @@ return new class extends Migration
 
             // Status sebagai string (sync dengan enum FastAPI)
             $table->string('status', 20)->default('pending');
-            $table->string('category', 50)->default('reguler');
+            # category field removed per user request
 
             $table->text('notes')->nullable();
             $table->text('cancel_reason')->nullable();

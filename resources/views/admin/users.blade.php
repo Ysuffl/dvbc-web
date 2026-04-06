@@ -166,12 +166,19 @@
 
                     <div class="space-y-2">
                         <label class="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest ml-1">Account Role</label>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-3 gap-4">
                             <label class="relative cursor-pointer group">
                                 <input type="radio" name="role" value="STAFF" checked class="peer hidden">
                                 <div class="p-4 rounded-md bg-stone-50 border border-stone-200 peer-checked:border-brand-primary peer-checked:bg-brand-light transition-all text-center">
                                     <i data-lucide="users" class="w-5 h-5 mx-auto mb-2 text-stone-400 group-hover:text-brand-primary peer-checked:text-brand-primary transition-colors"></i>
                                     <p class="text-[10px] font-extrabold text-stone-500 peer-checked:text-brand-primary uppercase tracking-widest">Staff</p>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="role" value="CS" class="peer hidden">
+                                <div class="p-4 rounded-md bg-stone-50 border border-stone-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 transition-all text-center">
+                                    <i data-lucide="headset" class="w-5 h-5 mx-auto mb-2 text-stone-400 group-hover:text-amber-500 peer-checked:text-amber-500 transition-colors"></i>
+                                    <p class="text-[10px] font-extrabold text-stone-500 peer-checked:text-amber-600 uppercase tracking-widest">CS</p>
                                 </div>
                             </label>
                             <label class="relative cursor-pointer group">

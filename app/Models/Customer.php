@@ -10,7 +10,7 @@ class Customer extends Model
     const UPDATED_AT = null; 
 
     protected $fillable = [
-        'name', 'phone', 'age', 'gender', 'total_spending', 'master_level_id', 'created_at', 'last_visit', 'total_visits'
+        'name', 'phone', 'age', 'gender', 'nat', 'total_spending', 'master_level_id', 'created_at', 'last_visit', 'total_visits'
     ];
 
     public function masterLevel()

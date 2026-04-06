@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Booking;
-use App\Models\MasterCategory;
 use App\Models\MasterLevel;
+use App\Models\MasterTag;
 use Illuminate\Support\Facades\DB;
+use Shuchkin\SimpleXLSXGen;
+
 class CustomerController extends Controller
 {
     public function index(Request $request)
@@ -31,7 +33,7 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->orderBy('created_at', 'desc')
+        $customers = $query->orderBy('name', 'asc')
             ->paginate(15)
             ->withQueryString();
 
@@ -43,24 +45,22 @@ class CustomerController extends Controller
         $rawTopTags = DB::table('master_tags')
             ->join('booking_tags', 'master_tags.id', '=', 'booking_tags.tag_id')
             ->join('bookings', 'booking_tags.booking_id', '=', 'bookings.id')
+            ->join('master_tag_groups', 'master_tags.master_tag_group_id', '=', 'master_tag_groups.id')
             ->whereIn('bookings.customer_id', $customerIds)
             ->select(
                 'bookings.customer_id',
                 'master_tags.id',
                 'master_tags.name',
-                'master_tags.group_name',
+                'master_tag_groups.name as group_name',
                 DB::raw('count(*) as tag_count')
             )
-            ->groupBy('bookings.customer_id', 'master_tags.id', 'master_tags.name', 'master_tags.group_name')
+            ->groupBy('bookings.customer_id', 'master_tags.id', 'master_tags.name', 'master_tag_groups.name')
             ->orderBy('bookings.customer_id')
             ->orderByDesc('tag_count')
             ->get()
             ->groupBy('customer_id')
             ->map(fn($tags) => $tags->take(3)); // Top 3 per customer
 
-        // ── Category & Level config dari DB (bukan hardcode) ────────────
-        $categoryMap = MasterCategory::all()
-            ->keyBy(fn($c) => strtoupper($c->name));
 
         $levels = MasterLevel::orderBy('min_spending', 'asc')->get();
 
@@ -79,12 +79,14 @@ class CustomerController extends Controller
 
         return view('admin.customers', compact(
             'customers', 'lifetimeRevenue', 'allCustomersForExport',
-            'levels', 'categoryMap', 'rawTopTags'
+            'levels', 'rawTopTags'
         ));
     }
 
-    public function export()
+    public function export(Request $request)
     {
+        $format = $request->query('format', 'csv');
+
         $customers = Customer::withCount(['bookings as visits_count' => function($query) {
             $query->select(DB::raw('count(distinct start_time)'));
         }])
@@ -92,8 +94,73 @@ class CustomerController extends Controller
         ->orderBy('name')
         ->get();
 
-        $filename = "customers_database_" . date('Y-m-d') . ".csv";
+        $allMasterTags = MasterTag::all();
         
+        $header = [
+            'name', 'phone', 'gender', 'age_range', 'nat', 'total_spend', 'total_visit', 
+            'date', 'time_in', 'time_out', 'total_pax'
+        ];
+        
+        foreach ($allMasterTags as $tag) {
+            $header[] = $tag->abbreviation ?: strtolower(str_replace(' ', '_', $tag->name));
+        }
+
+        $exportData = [];
+        $exportData[] = $header;
+
+        foreach ($customers as $customer) {
+            $ownedTagIds = [];
+            $latestBooking = null;
+            if ($customer->bookings) {
+                $latestBooking = $customer->bookings->sortByDesc('start_time')->first();
+                foreach($customer->bookings as $b) {
+                    if ($b->tags) {
+                        foreach($b->tags as $t) {
+                            $ownedTagIds[] = $t->id;
+                        }
+                    }
+                }
+            }
+            $ownedTagIds = array_unique($ownedTagIds);
+            
+            $hasTag = function($tagId) use ($ownedTagIds) {
+                return in_array($tagId, $ownedTagIds) ? 1 : 0;
+            };
+
+            $totalSpend = (int) ($customer->total_spending + ($customer->bookings ? $customer->bookings->sum('billed_price') : 0));
+            $formattedSpend = "Rp " . number_format($totalSpend, 0, ',', '.');
+
+            $row = [
+                $customer->name,
+                $customer->phone,
+                strtoupper($customer->gender ?: 'MALE'),
+                $customer->age ?: '',
+                $customer->nat ?: 'INA',
+                $formattedSpend,
+                $customer->total_visits ?: ($customer->visits_count ?? 0),
+                $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('Y-m-d') : '',
+                $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('H:i') : '',
+                $latestBooking ? \Carbon\Carbon::parse($latestBooking->end_time)->format('H:i') : '',
+                $latestBooking ? $latestBooking->pax : 1
+            ];
+            
+            foreach ($allMasterTags as $tag) {
+                $row[] = $hasTag($tag->id);
+            }
+            $exportData[] = $row;
+        }
+
+        if ($format === 'xlsx') {
+            $xlsx = SimpleXLSXGen::fromArray($exportData);
+            return response()->streamDownload(function() use ($xlsx) {
+                echo $xlsx;
+            }, "customers_database_" . date('Y-m-d') . ".xlsx", [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]);
+        }
+
+        // Default CSV
+        $filename = "customers_database_" . date('Y-m-d') . ".csv";
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -102,57 +169,11 @@ class CustomerController extends Controller
             'Expires' => '0'
         ];
 
-        $callback = function() use ($customers) {
+        $callback = function() use ($exportData) {
             $file = fopen('php://output', 'w');
-            
-            // Add BOM for Excel UTF-8 support
-            fputs($file, "\xEF\xBB\xBF");
-
-            // Header
-            fputcsv($file, [
-                'name', 'phone', 'gender', 'age_range', 'total_spend', 'total_visit', 
-                'date', 'time_in', 'time_out', 'toal_pax',
-                'pu_din', 'pu_fam', 'pu_lunch', 'pu_party', 'pu_celeb', 'pu_comm', 'pu_corp',
-                'pr_reg', 'pr_ayce', 'pr_aycd', 'pr_alc', 'pr_buff', 'pr_iftar',
-                'time_wdd', 'time_wdn', 'time_wed', 'time_wen'
-            ]);
-
-            foreach ($customers as $customer) {
-                $ownedTagNames = [];
-                $latestBooking = null;
-                if ($customer->bookings) {
-                    $latestBooking = $customer->bookings->sortByDesc('start_time')->first();
-                    foreach($customer->bookings as $b) {
-                        if ($b->tags) {
-                            foreach($b->tags as $t) {
-                                $ownedTagNames[] = $t->name;
-                            }
-                        }
-                    }
-                }
-                $ownedTagNames = array_unique($ownedTagNames);
-                
-                $hasTag = function($tagName) use ($ownedTagNames) {
-                    return in_array($tagName, $ownedTagNames) ? 1 : 0;
-                };
-
-                $totalSpend = (int) ($customer->total_spending + ($customer->bookings ? $customer->bookings->sum('billed_price') : 0));
-
-                fputcsv($file, [
-                    $customer->name,
-                    $customer->phone,
-                    strtoupper($customer->gender ?: 'MALE'),
-                    $customer->age ?: '',
-                    $totalSpend,
-                    $customer->total_visits ?: ($customer->visits_count ?? 0),
-                    $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('Y-m-d') : '',
-                    $latestBooking ? \Carbon\Carbon::parse($latestBooking->start_time)->format('H:i') : '',
-                    $latestBooking ? \Carbon\Carbon::parse($latestBooking->end_time)->format('H:i') : '',
-                    $latestBooking ? $latestBooking->pax : 1,
-                    $hasTag('Dining'), $hasTag('Family'), $hasTag('Lunch'), $hasTag('Party'), $hasTag('Celebration'), $hasTag('Community'), $hasTag('Corporate'),
-                    $hasTag('Regular F&B'), $hasTag('AYCE'), $hasTag('AYCD'), $hasTag('Alcohol'), $hasTag('Buffet'), $hasTag('Iftar Buffet'),
-                    $hasTag('Weekday Day'), $hasTag('Weekday Night'), $hasTag('Weekend Day'), $hasTag('Weekend Night')
-                ]);
+            fputs($file, "\xEF\xBB\xBF"); // BOM for UTF-8
+            foreach ($exportData as $row) {
+                fputcsv($file, $row);
             }
             fclose($file);
         };
@@ -172,16 +193,17 @@ class CustomerController extends Controller
         try {
             // Fetch levels once for calculation
             $levels = MasterLevel::orderBy('min_spending', 'desc')->get();
+            $masterTagsById = DB::table('master_tags')->pluck('id')->toArray();
             $masterTagsByName = DB::table('master_tags')->pluck('id', 'name')->toArray();
             
-            $tagMappings = [
-                'pu_din' => 'Dining', 'pu_fam' => 'Family', 'pu_lunch' => 'Lunch', 
-                'pu_celeb' => 'Celebration', 'pu_party' => 'Party', 'pu_corp' => 'Corporate', 
-                'pu_comm' => 'Community', 'pr_reg' => 'Regular F&B', 'pr_ayce' => 'AYCE', 
-                'pr_aycd' => 'AYCD', 'pr_buff' => 'Buffet', 'pr_iftar' => 'Iftar Buffet', 
-                'pr_alc' => 'Alcohol', 'time_wdd' => 'Weekday Day', 'time_wdn' => 'Weekday Night', 
-                'time_wed' => 'Weekend Day', 'time_wen' => 'Weekend Night'
-            ];
+            $allTags = MasterTag::all();
+            $tagMappings = [];
+            
+            foreach($allTags as $tag) {
+                // Determine column name from abbreviation or name
+                $col = $tag->abbreviation ?: strtolower(str_replace(' ', '_', $tag->name));
+                $tagMappings[$col] = $tag->id;
+            }
 
             // Get or create a fallback table for imported bookings
             $fallbackTableId = DB::table('tables')->value('id');
@@ -238,14 +260,27 @@ class CustomerController extends Controller
                     'name'           => $row['name'],
                     'age'            => $age,
                     'gender'         => $normalizedGender,
+                    'nat'            => !empty($row['nat']) ? strtoupper(trim($row['nat'])) : null,
                     'total_spending' => $totalSpending,
                     'total_visits'   => $totalVisits,
                     'master_level_id'=> $levelId,
                     'last_visit'     => date('Y-m-d H:i:s'),
                 ];
 
-                // Normalize phone: Remove all non-digit characters like spaces and dashes
-                $phone = !empty($row['phone']) ? preg_replace('/[^\d]/', '', (string)$row['phone']) : null;
+                // Normalize phone: Smart Splitting for multiple numbers (e.g. "6281 / 6289")
+                $rawPhone = (string)($row['phone'] ?? '');
+                $phoneParts = preg_split('/[\/\|,]/', $rawPhone);
+                $cleanedPhones = [];
+                foreach ($phoneParts as $part) {
+                    $clean = preg_replace('/[^\d]/', '', trim($part));
+                    if (!empty($clean)) {
+                        $cleanedPhones[] = $clean;
+                    }
+                }
+                
+                // Recombine with standard separator for storage
+                $phone = !empty($cleanedPhones) ? implode(' / ', $cleanedPhones) : null;
+
                 if ($phone) {
                     $customer = Customer::updateOrCreate(['phone' => $phone], $customerData);
                 } else {
@@ -288,13 +323,13 @@ class CustomerController extends Controller
                 $bookingId = DB::table('bookings')->insertGetId([
                     'customer_id'  => $customer->id,
                     'table_id'     => $fallbackTableId,
-                    'pax'          => !empty($row['toal_pax']) ? (int)$row['toal_pax'] : 2,
+                    'pax'          => !empty($row['total_pax']) ? (int)$row['total_pax'] : (!empty($row['toal_pax']) ? (int)$row['toal_pax'] : 2),
                     'start_time'   => $startDate,
                     'end_time'     => $endDate,
                     'status'       => 'completed',
                     'billed_at'    => $startDate,
                     'billed_price' => 0, 
-                    'category'     => 'reguler',
+
                     'notes'        => 'Imported from historical template',
                     'created_at'   => now(),
                     'updated_at'   => now(),
@@ -302,39 +337,29 @@ class CustomerController extends Controller
 
                 // Collect and Insert tags if any are detected
                 $detectedTags = [];
-                foreach ($tagMappings as $col => $tagName) {
-                    // Check if column exists and has a value that isn't empty or 0
+                foreach ($tagMappings as $col => $tagId) {
                     if (isset($row[$col]) && $row[$col] != '' && $row[$col] != '0') {
-                        if (isset($masterTagsByName[$tagName])) {
-                            $detectedTags[] = $masterTagsByName[$tagName];
-                        }
+                        $detectedTags[] = $tagId;
                     }
                 }
-
+                
                 if (!empty($detectedTags)) {
-                    $bookingTagsData = [];
-                    foreach (array_unique($detectedTags) as $tagId) {
-                        $bookingTagsData[] = [
-                            'booking_id' => $bookingId,
-                            'tag_id'     => $tagId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
-                    if (!empty($bookingTagsData)) {
-                        // Ignore duplicates/errors with insertOrIgnore just in case
-                        DB::table('booking_tags')->insertOrIgnore($bookingTagsData);
-                    }
-                    
-                    // Karena kita menambah 1 dummy booking, perhitungan total trips di dashboard
+                    $pivotData = array_map(fn($tid) => [
+                        'booking_id' => $bookingId,
+                        'tag_id'     => $tid,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ], array_unique($detectedTags));
+                    DB::table('booking_tags')->insertOrIgnore($pivotData);
+                }
+                
+                // Karena kita menambah 1 dummy booking, perhitungan total trips di dashboard
                     // akan jadi `total_visits + hitung_booking`. Agar tidak double-count visit,
                     // kurangi total_visits di profil sebanyak 1. (Minimal 0)
                     if ($customer->total_visits > 0) {
                         $customer->decrement('total_visits');
                     }
                 }
-                // ----------------------------------------------------
-            }
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Data imported successfully.']);
         } catch (\Exception $e) {
@@ -347,13 +372,14 @@ class CustomerController extends Controller
     {
         $request->validate([
             'name'   => 'required|string|max:255',
-            'phone'  => 'nullable|string|max:20',
+            'phone'  => 'nullable|string|max:100',
             'gender' => 'nullable|string|max:20',
             'age'    => 'nullable|string',
+            'nat'    => 'nullable|string|max:10',
         ]);
 
         $customer = Customer::findOrFail($id);
-        $customer->update($request->only(['name', 'phone', 'gender', 'age']));
+        $customer->update($request->only(['name', 'phone', 'gender', 'age', 'nat']));
 
         return back()->with('success', 'Customer updated successfully.');
     }

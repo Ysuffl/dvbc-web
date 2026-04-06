@@ -35,6 +35,16 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Add CS User
+        User::firstOrCreate(
+            ['username' => 'cs'],
+            [
+                'hashed_password' => \Illuminate\Support\Facades\Hash::make('cs123'),
+                'role' => 'cs',
+                'is_active' => true,
+            ]
+        );
+
         $this->call(FloorPlanSeeder::class);
     }
 }

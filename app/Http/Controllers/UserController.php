@@ -19,7 +19,7 @@ class UserController extends Controller
         $request->validate([
             'username' => 'required|unique:users,username',
             'password' => 'required|min:6',
-            'role'     => 'required|in:ADMIN,STAFF'
+            'role'     => 'required|in:ADMIN,STAFF,CS'
         ]);
 
         User::create([

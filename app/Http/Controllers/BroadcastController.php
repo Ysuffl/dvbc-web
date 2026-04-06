@@ -32,15 +32,18 @@ class BroadcastController extends Controller
         $templates = BroadcastTemplate::orderBy('name')->get();
 
         // Tags + jumlah customer unik per tag
-        $tags = MasterTag::select('master_tags.*', DB::raw('COUNT(DISTINCT bookings.customer_id) as customer_count'))
+        $tags = MasterTag::select('master_tags.*', 'master_tag_groups.name as group_name', DB::raw('COUNT(DISTINCT bookings.customer_id) as customer_count'))
             ->join('booking_tags', 'master_tags.id', '=', 'booking_tags.tag_id')
             ->join('bookings', 'booking_tags.booking_id', '=', 'bookings.id')
+            ->join('master_tag_groups', 'master_tags.master_tag_group_id', '=', 'master_tag_groups.id')
             ->groupBy(
                 'master_tags.id',
                 'master_tags.name',
-                'master_tags.group_name',
+                'master_tag_groups.name',
                 'master_tags.created_at',
-                'master_tags.updated_at'
+                'master_tags.updated_at',
+                'master_tags.master_tag_group_id',
+                'master_tags.abbreviation'
             )
             ->orderByDesc('customer_count')
             ->get();
@@ -174,11 +177,20 @@ class BroadcastController extends Controller
             $imageUrl = Storage::url($path);
         }
 
-        $messages = $customers->map(fn($c) => [
-            'to'    => $c->phone,
-            'text'  => str_replace('{name}', $c->name, $request->message ?? ''),
-            'image' => $imageUrl,
-        ])->values()->toArray();
+        $messages = [];
+        foreach ($customers as $c) {
+            $rawPhones = explode(' / ', $c->phone);
+            foreach ($rawPhones as $p) {
+                $cleanPhone = preg_replace('/[^\d]/', '', trim($p));
+                if (!empty($cleanPhone)) {
+                    $messages[] = [
+                        'to'    => $cleanPhone,
+                        'text'  => str_replace('{name}', $c->name, $request->message ?? ''),
+                        'image' => $imageUrl,
+                    ];
+                }
+            }
+        }
 
         try {
             $response = Http::withHeaders([

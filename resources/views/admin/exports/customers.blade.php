@@ -4,6 +4,7 @@
         <th>name</th>
         <th>phone</th>
         <th>gender</th>
+        <th>nat</th>
         <th>age_range</th>
         <th>total_spend</th>
         <th>total_visit</th>
@@ -77,6 +78,7 @@
             <td>{{ $customer->name }}</td>
             <td>{{ $customer->phone }}</td>
             <td>{{ strtoupper($customer->gender ?: '') }}</td>
+            <td>{{ $customer->nat ?: '' }}</td>
             <td>{{ $customer->age ?: '' }}</td>
             <td>{{ $totalSpend }}</td>
             <td>{{ $customer->total_visits ?: ($customer->visits_count ?? 0) }}</td>
